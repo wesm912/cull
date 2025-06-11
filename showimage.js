@@ -1,4 +1,3 @@
-#include "AutoStretch.js"
 #include "PreviewWindow.js"
 
 function main() {
@@ -8,6 +7,6 @@ function main() {
     var imageWindow =ImageWindow.open(path, "Preview"+Date.now(), "", true)[0];
     console.writeln("Image window: " + imageWindow + " is Null? " + imageWindow.isNull);
     previewWindow.SetImage(imageWindow);
-    previewWindow.show();
+//    previewWindow.show();
 }
 main();
