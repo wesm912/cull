@@ -43,11 +43,13 @@ function PreviewWindow( )
 {
     this.__base__ = Frame;
     this.__base__(  );
+    const CULL_W = 750;
+    const CULL_H = 500;
     this.image = null;
     this.stretchedImage = null;
     var self = this;
     this.imageWindow = null;
-    this.cullWindow = new ImageWindow(900, 600, 1, 32, true, false, "Cull");
+    this.cullWindow = new ImageWindow(CULL_W, CULL_H, 3, 32, true, true, "Cull");
     this.cullWindow.show();
     this.hide(); //add controls later
     
@@ -72,6 +74,9 @@ function PreviewWindow( )
 		var midY = (image.height)/2;
 
 		if ( image ) {
+		    this.view.beginProcess();
+		    image.colorSpace = ColorSpace_RGB;
+		    this.view.endProcess();
 		    this.cullWindow.mainView.image.resetSelections();
 		    this.cullWindow.mainView.beginProcess();
 		    this.cullWindow.mainView.image.selectedChannel = 0;
@@ -87,13 +92,15 @@ function PreviewWindow( )
 			this.cullWindow.mainView.endProcess();	
 		    }
 		    self.cullWindow.zoomToOptimalFit();
+		    this.cullWindow.mainView.image.rescale(CULL_W/image.width, CULL_H/image.height);
 		    this.cullWindow.updateViewport();
 		}
 //		self.imageWindow.show();
 		console.writeln("Image dimensions: " + image.width + "x" + image.height);
-//		this.cullWindow.mainView.image.rescale( image.width/900, image.height/600 );
+//		this.cullWindow.mainView.beginProcess();
+//		this.cullWindow.mainView.endProcess();
 		// this.cullWindow.mainView.image.selectedChannel = 1;
-		// this.cullWindow.mainView.image.apply(image);
+
 		// this.cullWindow.mainView.image.selectedChannel = 2;
 		// this.cullWindow.mainView.image.apply(image);
 		

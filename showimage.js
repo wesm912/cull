@@ -7,6 +7,7 @@ function main() {
     var imageWindow =ImageWindow.open(path, "Preview"+Date.now(), "", true)[0];
     console.writeln("Image window: " + imageWindow + " is Null? " + imageWindow.isNull);
     previewWindow.SetImage(imageWindow);
+    imageWindow.forceClose();
 //    previewWindow.show();
 }
 main();
