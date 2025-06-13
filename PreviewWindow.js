@@ -38,6 +38,7 @@
 #include <pjsr/ColorSpace.jsh>
 #include <pjsr/UndoFlag.jsh>
 #include "AutoStretch.js"
+#include "Reticle.js"
 
 function PreviewWindow( )
 {
@@ -52,6 +53,7 @@ function PreviewWindow( )
     this.cullWindow = new ImageWindow(CULL_W, CULL_H, 3, 32, true, true, "Cull");
     this.cullWindow.show();
     this.hide(); //add controls later
+    this.reticle = new Reticle();
     
    this.SetImage = function( window )
     {
@@ -76,6 +78,7 @@ function PreviewWindow( )
 		if ( image ) {
 		    this.view.beginProcess();
 		    image.colorSpace = ColorSpace_RGB;
+		    image.resample(CULL_W, CULL_H, ResizeMode_AbsolutePixels, AbsoluteResizeMode_ForceWidth);
 		    this.view.endProcess();
 		    this.cullWindow.mainView.image.resetSelections();
 		    this.cullWindow.mainView.beginProcess();
@@ -91,37 +94,10 @@ function PreviewWindow( )
 		    } finally {
 			this.cullWindow.mainView.endProcess();	
 		    }
+		    this.reticle.draw(this.cullWindow, image.width/25);
 		    self.cullWindow.zoomToOptimalFit();
-		    this.cullWindow.mainView.image.rescale(CULL_W/image.width, CULL_H/image.height);
 		    this.cullWindow.updateViewport();
 		}
-//		self.imageWindow.show();
-		console.writeln("Image dimensions: " + image.width + "x" + image.height);
-//		this.cullWindow.mainView.beginProcess();
-//		this.cullWindow.mainView.endProcess();
-		// this.cullWindow.mainView.image.selectedChannel = 1;
-
-		// this.cullWindow.mainView.image.selectedChannel = 2;
-		// this.cullWindow.mainView.image.apply(image);
-		
-		// let tmpImage = new Image(image);
-		// let graphics = new VectorGraphics( this );
-		// if (image) {
-		//     let bitmap = new Bitmap(image.width, image.height);
-		//     let pi = 3.14159;
-		//     bitmap.assign(tmpImage.render());
-		//     graphics.drawBitmap( 0, 0, bitmap);
-		//     // Draw reticle
-		//     graphics.brush = new Brush(0xff000000);
-		//     graphics.drawLine(midX, 0, midX, image.height);
-		//     graphics.drawLine(0, midY, image.width, midY);
-		//     graphics.drawArc(midX, midY, (image.width)/25, 0, 2*pi);
-		//     self.cullWindow.mainView.image.assign(tmpImage);
-		//     self.cullWindow.mainView.image.zoomToFit();
-		//     cullWindow.mainView.image.updateViewport();
-		    
-		// }
-		// graphics.end();
 	    } 
 	} catch (exc) {
 	    console.writeln("exception drawing PreviewWindow: " + exc);

@@ -8,7 +8,8 @@ function Reticle()
     this.view = null;
     this.image = null;
     
-    this.draw = function(win) {
+    this.draw = function(win, radius = 20) {
+	console.writeln("radius :" + radius);
 	if (win &&!win.isNull) {
 	    let view = win.mainView;
 	    if (view && view.image) {
@@ -22,7 +23,7 @@ function Reticle()
 		    graphics.pen = pen;
 		    graphics.drawLine(0, midY, w, midY);
 		    graphics.drawLine(midX, 0, midX, h);
-		    graphics.drawArc(midX, midY, 200, 0, 6.28);
+		    graphics.drawArc(midX, midY, radius, 0, 6.28);
 		} finally {
 		    graphics.end();
 		}
@@ -30,7 +31,6 @@ function Reticle()
 		image.blend(bmap);
 		view.endProcess();
 	    }
-	    win.show();
 	}
     }
 };
