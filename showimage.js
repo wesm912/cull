@@ -9,14 +9,10 @@ function main() {
     var imageWindow =ImageWindow.open(path, "Preview"+Date.now(), "", true)[0];
     console.writeln("Image window: " + imageWindow + " is Null? " + imageWindow.isNull);
     let view = imageWindow.mainView, img = view.image;
-    let stf = new AutoStretch();
-    view.beginProcess();
-    img.resample(750, 500, ResizeMode_AbsolutePixels, AbsoluteResizeMode_ForceWidth);
-    stf.HardApply(view);
-    view.endProcess();
+
+    console.writeln("width and height of window: " + previewWindow.width + " , " + previewWindow.height);
     previewWindow.SetImage(imageWindow);
-    imageWindow.show();
-    imageWindow.forceClose();
-    //previewWindow.show();
+   imageWindow.forceClose();
+
 }
 main();
