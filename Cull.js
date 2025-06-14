@@ -25,7 +25,7 @@
 #include <pjsr/StdIcon.jsh>
 #include <pjsr/TextAlign.jsh>
 #include <pjsr/UndoFlag.jsh>
-#include "PreviewControl.js"    
+#include "PreviewWindow.js"    
 
 // Global variables
 //var dialog;
@@ -134,9 +134,9 @@ function CullDialog() {
 
     var fileManager = new FileManager();
     var imagePreview = new ImagePreview();
-    //    var previewControl = new PreviewControl(this);
     this.previewWindow = new PreviewWindow(this)
-
+    var self = this;
+    this.focusStyle = 0x02;//keypress events
     // UI Controls
     this.filesTreeBox = new TreeBox(this);
     this.filesTreeBox.setMinSize(400, 300);
@@ -227,7 +227,8 @@ function CullDialog() {
    this.ok_Button.icon = this.scaledResource( ":/icons/close.png" );
    this.ok_Button.onClick = function()
    {
-      this.dialog.ok();
+       this.dialog.ok();
+       self.previewWindow.closeWindow();
    };
 
    this.buttons_Sizer = new HorizontalSizer;
@@ -292,15 +293,19 @@ function CullDialog() {
     this.prevButton.onClick = function() {
         if (currentIndex > 0) {
             currentIndex--;
-            self.selectFile(currentIndex);
-        }
+        } else {
+	    currentIndex = fileList.length -1;
+	}
+        self.selectFile(currentIndex);
     };
 
     this.nextButton.onClick = function() {
         if (currentIndex < fileList.length - 1) {
             currentIndex++;
-            self.selectFile(currentIndex);
-        }
+        } else {
+	    currentIndex= 0;
+	}
+        self.selectFile(currentIndex);
     };
 
     this.playButton.onClick = function() {
@@ -345,19 +350,24 @@ function CullDialog() {
     };
 
     // Keyboard handling
-    this.filesTreeBox.onKeyPress = function(key, modifiers) {
+    this.onKeyPress = function(key, modifiers) {
+	console.writeln("Got key " + key + ", modifiers " + modifiers);
         switch (key) {
         case Key_Up:
             if (currentIndex > 0) {
                 currentIndex--;
-                self.selectFile(currentIndex);
-            }
+            } else {
+		currentIndex = fileList.length -1;
+	    }
+            self.selectFile(currentIndex);
             break;
         case Key_Down:
             if (currentIndex < fileList.length - 1) {
                 currentIndex++;
-                self.selectFile(currentIndex);
-            }
+            } else {
+		currentIndex = 0;
+	    }
+            self.selectFile(currentIndex);
             break;
         case Key_K: // 'K' key
 	    console.writeln("keypress K");
@@ -406,6 +416,10 @@ function CullDialog() {
 
     this.selectFile = function(index) {
         if (index >= 0 && index < fileList.length) {
+	    let currentNode = self.filesTreeBox.currentnode;
+	    if (currentNode) {
+		currentNode.selected = false;
+	    }
             currentIndex = index;
 	    console.writeln("Setting current node to " + index);
             self.filesTreeBox.currentnode = self.filesTreeBox.child(index);
@@ -562,6 +576,7 @@ function CullDialog() {
         if (previewBitmap) {
             previewBitmap = null;
         }
+	self.previewWindow.closeWindow();
     };
 }
 
@@ -573,7 +588,7 @@ function main() {
     console.show();
 
     var dialog = new CullDialog();
-    console.writeln(" Dialog " + typeof(dialog));
+    console.writeln(" Dialog focus style " + dialog.focusStyle);
     try {
 
 	dialog.execute();

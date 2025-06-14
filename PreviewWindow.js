@@ -69,7 +69,18 @@ function PreviewWindow( parent )
 	    this.showImage();
 	}
    };
-   
+
+    this.closeWindow = function () {
+	console.writeln("Closing cull window " + this.cullWindow);
+	if (this.cullWindow && !this.cullWindow.isNull) {
+	    this.cullWindow.forceClose();
+	}
+	console.writeln("Closing image window " + this.imageWindow);
+	if (this.imageWindow && !this.imageWindow.isNull) {
+	    this.imageWindow.forceClose();
+	}
+    };
+    
     this.showImage = function() {
 	console.writeln("show");
 	try {
@@ -100,6 +111,7 @@ function PreviewWindow( parent )
 		    }
 		    this.reticle.draw(this.cullWindow, image.width/25);
 		    this.cullWindow.show();
+		    
 		    self.cullWindow.zoomToOptimalFit();
 		    this.cullWindow.updateViewport();
 		}
