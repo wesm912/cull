@@ -40,30 +40,34 @@
 #include "AutoStretch.js"
 #include "Reticle.js"
 
-function PreviewWindow( )
+function PreviewWindow( parent )
 {
     this.__base__ = Frame;
-    this.__base__(  );
+    this.__base__( parent );
+    this.parent = parent;
     const CULL_W = 750;
     const CULL_H = 500;
     this.image = null;
     this.stretchedImage = null;
     var self = this;
     this.imageWindow = null;
-    this.cullWindow = new ImageWindow(CULL_W, CULL_H, 3, 32, true, true, "Cull");
-    this.cullWindow.show();
+    this.cullWindow = new ImageWindow(CULL_W, CULL_H, 3, 32, true, true, "CullPreview");
+//    this.cullWindow.show();
     this.hide(); //add controls later
     this.reticle = new Reticle();
     
-   this.SetImage = function( window )
+    this.SetImage = function( path )
     {
 	if (this.imageWindow && !this.imageWindow.isNull) {
 	    this.imageWindow.forceClose();
 	}
-	this.imageWindow = window;
-	this.view = window.mainView;
-	this.image = self.view.image;
-	this.showImage();
+	var window = ImageWindow.open(path)[0];
+        if (window && window.isValidView && !window.isNull) {
+	    this.imageWindow = window;
+	    this.view = window.mainView;
+	    this.image = window.mainView.image;
+	    this.showImage();
+	}
    };
    
     this.showImage = function() {
@@ -95,6 +99,7 @@ function PreviewWindow( )
 			this.cullWindow.mainView.endProcess();	
 		    }
 		    this.reticle.draw(this.cullWindow, image.width/25);
+		    this.cullWindow.show();
 		    self.cullWindow.zoomToOptimalFit();
 		    this.cullWindow.updateViewport();
 		}
