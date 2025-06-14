@@ -54,9 +54,7 @@ function FileManager() {
             if (base != "/")
                base.slice(base.length -1, -1);
          for (let i = 0; i < extensions.length; i++) {
-            console.writeln("Searching " + base + "/*" + extensions[i]);
             let found = searchDirectory(base + "/*" + extensions[i], true);
-            console.writeln("Found: " + found);
             for (let j = 0; j < found.length; j++) {
                let tmp = found[j];
                let slash = tmp.lastIndexOf('/');
@@ -67,12 +65,12 @@ function FileManager() {
                   path: found[j],
                   name: tmp,
                   keep: false,
-                  reject: false
+                   reject: false,
+		   reference: false
                })
             }
          };
       fileList = files;
-      console.writeln("Files: " + files);
       return files;
     };
 
@@ -94,42 +92,40 @@ function FileManager() {
 }
 
 // Image preview class
-function ImagePreview() {
-    this.loadImage = function(filePath) {
-        try {
-            var window = ImageWindow.open(filePath)[0];
-            if (window && window.isValidView) {
-                return window;
-            }
-        } catch (error) {
-            console.writeln("Error loading image: " + error.message);
-        }
-        return null;
-    };
+//function ImagePreview() {
+//    this.loadImage = function(filePath) {
+//        try {
+//                 return window;
+//             }
+//         } catch (error) {
+//             console.writeln("Error loading image: " + error.message);
+//         }
+//         return null;
+//     };
 
-    this.createBitmap = function(window, width, height) {
-        if (!window || !window.isValidView) return null;
+//     this.createBitmap = function(window, width, height) {
+//         if (!window || !window.isValidView) return null;
 
-        try {
-            var view = window.mainView;
-            var image = view.image;
+//         try {
+//             var view = window.mainView;
+//             var image = view.image;
 
-            // Apply stretching based on current mode
-            var stretchedImage = new Image(image);
-            this.applyStretch(stretchedImage);
+//             // Apply stretching based on current mode
+//             var stretchedImage = new Image(image);
+//             this.applyStretch(stretchedImage);
 
-            // Create bitmap
- //           var bitmap = new Bitmap(width, height);
- //           bitmap.assign(stretchedImage);
-            console.writeln("Creating bitmap");
-            return stretchedImage.render();
-        } catch (error) {
-            console.writeln("Error creating bitmap: " + error.message);
-            return null;
-        }
-    };
+//             // Create bitmap
+//  //           var bitmap = new Bitmap(width, height);
+//  //           bitmap.assign(stretchedImage);
+//             console.writeln("Creating bitmap");
+//             return stretchedImage.render();
+//         } catch (error) {
+//             console.writeln("Error creating bitmap: " + error.message);
+//             return null;
+//         }
+//     };
 
-}
+// }
 
 // Main dialog class
 function CullDialog() {
@@ -138,7 +134,8 @@ function CullDialog() {
 
     var fileManager = new FileManager();
     var imagePreview = new ImagePreview();
-    var previewControl = new PreviewControl(this);
+    //    var previewControl = new PreviewControl(this);
+    this.previewWindow = new PreviewWindow(this)
 
     // UI Controls
     this.filesTreeBox = new TreeBox(this);
@@ -419,10 +416,12 @@ function CullDialog() {
 
     this.updatePreview = function() {
         if (fileList.length > 0 && currentIndex < fileList.length) {
-            var window = imagePreview.loadImage(fileList[currentIndex].path);
-            if (window) {
-		previewControl.SetImage(window);
-            }
+	    //            var window = imagePreview.loadImage(fileList[currentIndex].path);
+	    console.writeln("Calling previewWindow.SetImage");
+	    this.previewWindow.SetImage(fileList[currentIndex].path);
+            // if (window) {
+	    // 	previewControl.SetImage(window);
+            // }
         }
     };
 
@@ -440,10 +439,10 @@ function CullDialog() {
         playTimer.onTimeout = function() {
             if (currentIndex < fileList.length - 1) {
                 currentIndex++;
-                self.selectFile(currentIndex);
             } else {
-                self.pausePlayback();
+		currentIndex = 0;
             }
+            self.selectFile(currentIndex);
         };
         playTimer.start();
     };
@@ -515,7 +514,7 @@ function CullDialog() {
     this.leftSizer = new VerticalSizer;
     this.leftSizer.margin = 6;
     this.leftSizer.spacing = 4;
-    this.leftSizer.add(previewControl, 100);
+    this.leftSizer.add(this.previewWindow, 100);
     this.leftSizer.add(this.playbackSizer);
 //    this.leftSizer.add(this.stretchControlsSizer);
 
