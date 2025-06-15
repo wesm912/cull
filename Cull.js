@@ -164,33 +164,39 @@ function CullDialog() {
 
     // File operation controls
     this.moveKeepButton = new PushButton(this);
-    this.moveKeepButton.text = "Move Keep Files";
-    this.moveKeepButton.backgroundColor = 0xFF00AA00;
+//    this.moveKeepButton.text = "Move Keep Files";
+    this.moveKeepButton.icon = this.scaledResource(":/icons/save.png");
+    this.moveKeepButton.backgroundColor = 0xFF00ee00;
 
     this.moveRejectButton = new PushButton(this);
-    this.moveRejectButton.text = "Move Reject Files";
-    this.moveRejectButton.backgroundColor = 0xFFAA0000;
+//    this.moveRejectButton.text = "Move Reject Files";
+    this.moveRejectButton.icon = this.scaledResource(":/file-explorer/cut.png");
+    this.moveRejectButton.backgroundColor = 0xFFee0000;
+    this.moveRejectButton.toolTip = "Move files marked to save to rejects directory."
 
     // Playback controls
     this.prevButton = new PushButton(this);
-    this.prevButton.text = "◀";
+    //    this.prevButton.text = "◀";
+    this.prevButton.icon = this.scaledResource(":/icons/goto-previous.png");
     this.prevButton.setFixedSize(30, 25);
 
     this.playButton = new PushButton(this);
-    this.playButton.text = "▶";
+    this.playButton.icon = this.scaledResource(":/icons/play.png");
+//    this.playButton.text = "▶";
     this.playButton.setFixedSize(30, 25);
 
     this.nextButton = new PushButton(this);
-    this.nextButton.text = "▶";
+    this.nextButton.icon = this.scaledResource(":/icons/goto-next.png");
+//    this.nextButton.text = "▶";
     this.nextButton.setFixedSize(30, 25);
 
     this.speedComboBox = new ComboBox(this);
+    this.speedComboBox.addItem("0.1 sec");
     this.speedComboBox.addItem("0.3 sec");
     this.speedComboBox.addItem("0.5 sec");
     this.speedComboBox.addItem("1.0 sec");
     this.speedComboBox.addItem("1.5 sec");
     this.speedComboBox.addItem("2.0 sec");
-    this.speedComboBox.addItem("3.0 sec");
     this.speedComboBox.currentItem = 2;
 
     // // Stretch controls
@@ -205,7 +211,7 @@ function CullDialog() {
 
     // this.shadowsSlider = new NumericControl(this);
     // this.shadowsSlider.label.text = "Shadows:";
-    // this.shadowsSlider.setRange(0, 1);
+   // this.shadowsSlider.setRange(0, 1);
     // this.shadowsSlider.setValue(0);
     // this.shadowsSlider.setPrecision(3);
 
@@ -277,7 +283,10 @@ function CullDialog() {
             // Remove moved files from list
             fileList = fileList.filter(function(file) { return !file.keep; });
             self.updateFileList();
-        }
+        } else {
+	    let msg = new MessageBox("Please choose a directory to hold files to keep");
+	    msg.execute();
+	}
     };
 
     this.moveRejectButton.onClick = function() {
@@ -287,7 +296,10 @@ function CullDialog() {
             // Remove moved files from list
             fileList = fileList.filter(function(file) { return !file.reject; });
             self.updateFileList();
-        }
+        } else {
+	    let msg = new MessageBox("Please choose a directory to hold files to remove");
+	    msg.execute();
+	}
     };
 
     this.prevButton.onClick = function() {
@@ -349,8 +361,13 @@ function CullDialog() {
         }
     };
 
+    this.filesTreeBox.onKeyPress = function() {
+	return false;
+    };
+    
     // Keyboard handling
     this.onKeyPress = function(key, modifiers) {
+	let wantsKey = false;
 	console.writeln("Got key " + key + ", modifiers " + modifiers);
         switch (key) {
         case Key_Up:
@@ -360,6 +377,7 @@ function CullDialog() {
 		currentIndex = fileList.length -1;
 	    }
             self.selectFile(currentIndex);
+	    wantsKey = true;
             break;
         case Key_Down:
             if (currentIndex < fileList.length - 1) {
@@ -368,16 +386,18 @@ function CullDialog() {
 		currentIndex = 0;
 	    }
             self.selectFile(currentIndex);
+	    wantsKey = true;
             break;
         case Key_K: // 'K' key
 	    console.writeln("keypress K");
             if (fileList.length > 0) {
                 fileList[currentIndex].keep = !fileList[currentIndex].keep;
                 fileList[currentIndex].reject = false;
-		self.filesTreeBox.currentnode.selected = true;
+//		self.filesTreeBox.currentnode.selected = true;
 
                 self.updateFileList();
             }
+	    wantsKey = true;
             break;
         case Key_X: // 'X' key
 	    console.writeln("keypress X");
@@ -386,11 +406,13 @@ function CullDialog() {
                 fileList[currentIndex].keep = false;
                 self.updateFileList();
             }
+	    wantsKey = true;
             break;
 	default:
 	    console.writeln("got keycode " + key);
 	    break;
         }
+	return wantsKey;
     };
 
     // Helper methods
@@ -405,25 +427,20 @@ function CullDialog() {
 		node.setIcon(0,":/icons/delete.png");
 	    }
             node.setText(1, fileList[i].name);
-
-            if (fileList[i].keep) {
-                node.setBackgroundColor(0, 0xFF00AA00);
-            } else if (fileList[i].reject) {
-                node.setBackgroundColor(1, 0xFFAA0000);
-            }
         }
+	this.selectFile(currentIndex);
     };
 
     this.selectFile = function(index) {
         if (index >= 0 && index < fileList.length) {
-	    let currentNode = self.filesTreeBox.currentnode;
+	    let currentNode = self.filesTreeBox.currentNode;
 	    if (currentNode) {
 		currentNode.selected = false;
 	    }
             currentIndex = index;
 	    console.writeln("Setting current node to " + index);
-            self.filesTreeBox.currentnode = self.filesTreeBox.child(index);
-	    self.filesTreeBox.currentnode.selected = true;
+            self.filesTreeBox.currentNode = self.filesTreeBox.child(index);
+	    self.filesTreeBox.currentNode.selected = true;
             self.updatePreview();
         }
     };
@@ -440,12 +457,14 @@ function CullDialog() {
     };
 
     this.startPlayback = function() {
+	if (fileList.length == 0)
+	    return;
         isPlaying = true;
-        self.playButton.text = "⏸";
+        self.playButton.icon = self.scaledResource(":/icons/pause.png");
         self.prevButton.enabled = false;
         self.nextButton.enabled = false;
 
-        var speeds = [.300, .500, 1.000, 1.500, 2.000, 3.000];
+        var speeds = [0.100, .300, .500, 1.000, 1.500, 2.000];
         var interval = speeds[self.speedComboBox.currentItem];
 
         playTimer = new Timer();
@@ -463,7 +482,8 @@ function CullDialog() {
 
     this.pausePlayback = function() {
         isPlaying = false;
-        self.playButton.text = "▶";
+//        self.playButton.text = "▶";
+        self.playButton.icon = self.scaledResource(":/icons/play.png");
         self.prevButton.enabled = true;
         self.nextButton.enabled = true;
 
