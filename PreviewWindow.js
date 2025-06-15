@@ -45,8 +45,8 @@ function PreviewWindow( parent )
     this.__base__ = Frame;
     this.__base__( parent );
     this.parent = parent;
-    const CULL_W = 750;
-    const CULL_H = 500;
+    const CULL_W = 600;
+    const CULL_H = 400;
     this.image = null;
     this.stretchedImage = null;
     var self = this;
@@ -110,8 +110,14 @@ function PreviewWindow( parent )
 			this.cullWindow.mainView.endProcess();	
 		    }
 		    this.reticle.draw(this.cullWindow, image.width/25);
+		    let  p = this.parent.window.position;
+		    let cp = new Point;
+		    cp.x = p.x - this.cullWindow.width -5;
+		    cp.y = p.y;
+		    this.cullWindow.position = cp;
+		    console.hide();
 		    this.cullWindow.show();
-		    
+
 		    self.cullWindow.zoomToOptimalFit();
 		    this.cullWindow.updateViewport();
 		}
