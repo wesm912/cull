@@ -167,12 +167,13 @@ function CullDialog() {
 //    this.moveKeepButton.text = "Move Keep Files";
     this.moveKeepButton.icon = this.scaledResource(":/icons/save.png");
     this.moveKeepButton.backgroundColor = 0xFF00ee00;
+    this.moveKeepButton.toolTip = "Move files marked to save to keepers directory."
 
     this.moveRejectButton = new PushButton(this);
 //    this.moveRejectButton.text = "Move Reject Files";
     this.moveRejectButton.icon = this.scaledResource(":/file-explorer/cut.png");
     this.moveRejectButton.backgroundColor = 0xFFee0000;
-    this.moveRejectButton.toolTip = "Move files marked to save to rejects directory."
+    this.moveRejectButton.toolTip = "Move files marked to cut to rejects directory."
 
     // Playback controls
     this.prevButton = new PushButton(this);
