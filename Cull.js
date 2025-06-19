@@ -48,26 +48,35 @@ function FileManager() {
       var files = [];
       var extensions = [".fits", ".xisf", ".fit", ".fts"];
 
-      this.findFiles = function(directory ) {
+    this.dirname = function(filePath) {
+	let tmp =  filePath;
+        let slash = tmp.lastIndexOf('/');
+        if (slash > 0) {
+            tmp.slice(slash);
+        }
+	return tmp;
+    }
+    
+    this.findFiles = function(directory, recurse ) {
          let base = File.fullPath(directory);
          if (base[base.length -1] == "/")
             if (base != "/")
                base.slice(base.length -1, -1);
          for (let i = 0; i < extensions.length; i++) {
-            let found = searchDirectory(base + "/*" + extensions[i], true);
+            let found = searchDirectory(base + "/*" + extensions[i], recurse);
             for (let j = 0; j < found.length; j++) {
                let tmp = found[j];
                let slash = tmp.lastIndexOf('/');
                if (slash > 0) {
                   tmp.slice(slash);
                }
-               files.push({
-                  path: found[j],
-                  name: tmp,
-                  keep: false,
-                   reject: false,
-		   reference: false
-               })
+		files.push({
+                    path: found[j],
+                    name: tmp,
+                    keep: false,
+                    reject: false,
+		    reference: false
+		})
             }
          };
       fileList = files;
@@ -91,41 +100,6 @@ function FileManager() {
     };
 }
 
-// Image preview class
-//function ImagePreview() {
-//    this.loadImage = function(filePath) {
-//        try {
-//                 return window;
-//             }
-//         } catch (error) {
-//             console.writeln("Error loading image: " + error.message);
-//         }
-//         return null;
-//     };
-
-//     this.createBitmap = function(window, width, height) {
-//         if (!window || !window.isValidView) return null;
-
-//         try {
-//             var view = window.mainView;
-//             var image = view.image;
-
-//             // Apply stretching based on current mode
-//             var stretchedImage = new Image(image);
-//             this.applyStretch(stretchedImage);
-
-//             // Create bitmap
-//  //           var bitmap = new Bitmap(width, height);
-//  //           bitmap.assign(stretchedImage);
-//             console.writeln("Creating bitmap");
-//             return stretchedImage.render();
-//         } catch (error) {
-//             console.writeln("Error creating bitmap: " + error.message);
-//             return null;
-//         }
-//     };
-
-// }
 
 // Main dialog class
 function CullDialog() {
@@ -133,7 +107,7 @@ function CullDialog() {
     this.__base__();
 
     var fileManager = new FileManager();
-    var imagePreview = new ImagePreview();
+//    var imagePreview = new ImagePreview();
     this.previewWindow = new PreviewWindow(this)
     var self = this;
     this.focusStyle = 0x02;//keypress events
@@ -150,9 +124,14 @@ function CullDialog() {
     // Preview Dialog
 
     // Directory controls
-    this.inputDirEdit = new Edit(this);
     this.inputDirButton = new PushButton(this);
-    this.inputDirButton.text = "Load Files...";
+    this.inputDirButton.text = "Load Directory...";
+
+    this.inputFilesButton = new PushButton(this);
+    this.inputFilesButton.text = "Load Files...";
+
+    this.clearAllFilesButton = new PushButton(this);
+    this.clearAllFilesButton.text = "Clear All";
 
     this.keepDirEdit = new Edit(this);
     this.keepDirButton = new PushButton(this);
@@ -249,7 +228,6 @@ function CullDialog() {
     this.inputDirButton.onClick = function() {
         var dialog = new GetDirectoryDialog();
         if (dialog.execute()) {
-            self.inputDirEdit.text = dialog.directory;
             fileManager.inputDirectory = dialog.directory;
             fileList = fileManager.findFiles(fileManager.inputDirectory, true);
             self.updateFileList();
@@ -259,6 +237,35 @@ function CullDialog() {
             }
         }
     };
+
+    this.inputFilesButton.onClick = function() {
+        var dialog = new OpenFileDialog();
+	dialog.multipleSelections = true;
+	dialog.filters = [[ "All Supported Formats", "xisf", "fits", "fit"]];
+        if (dialog.execute()) {
+            let files = dialog.fileNames;
+	    for (let i = 0; i < files.length; i++) {
+		fileList.push( {
+                    path: fileManager.dirname(files[i]),
+                    name: files[i],
+                    keep: false,
+                    reject: false,
+		    reference: false
+		})
+	    }
+	    
+            self.updateFileList();
+            if (fileList.length > 0) {
+                currentIndex = 0;
+                self.selectFile(0);
+            }
+	}
+    };
+
+    this.clearAllFilesButton.onClick = function() {
+	fileList = [];
+	self.updateFileList();
+    }
 
     this.keepDirButton.onClick = function() {
         var dialog = new GetDirectoryDialog();
@@ -428,6 +435,7 @@ function CullDialog() {
 		node.setIcon(0,":/icons/delete.png");
 	    }
             node.setText(1, fileList[i].name);
+	    node.checkable = true;
         }
 	this.selectFile(currentIndex);
     };
@@ -442,6 +450,7 @@ function CullDialog() {
 	    console.writeln("Setting current node to " + index);
             self.filesTreeBox.currentNode = self.filesTreeBox.child(index);
 	    self.filesTreeBox.currentNode.selected = true;
+	    self.filesTreeBox.currentNode.selected = !self.filesTreeBox.currentNode.selected;
             self.updatePreview();
         }
     };
@@ -497,8 +506,9 @@ function CullDialog() {
     this.directorySizer = new HorizontalSizer;
     this.directorySizer.margin = 6;
     this.directorySizer.spacing = 4;
-    this.directorySizer.add(this.inputDirEdit, 100);
     this.directorySizer.add(this.inputDirButton);
+    this.directorySizer.add(this.inputFilesButton);
+    this.directorySizer.add(this.clearAllFilesButton);
 
     this.keepDirSizer = new HorizontalSizer;
     this.keepDirSizer.margin = 6;
