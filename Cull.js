@@ -126,12 +126,15 @@ function CullDialog() {
     // Directory controls
     this.inputDirButton = new PushButton(this);
     this.inputDirButton.text = "Load Directory...";
-
+    this.inputDirButton.icon = this.scaledResource(":/icons/folder-open.png")
+    
     this.inputFilesButton = new PushButton(this);
     this.inputFilesButton.text = "Load Files...";
+    this.inputFilesButton.icon = this.scaledResource(":/icons/file-list.png")
 
     this.clearAllFilesButton = new PushButton(this);
     this.clearAllFilesButton.text = "Clear All";
+    this.clearAllFilesButton.icon = this.scaledResource(":/icons/clear-inverted.png")
 
     this.keepDirEdit = new Edit(this);
     this.keepDirButton = new PushButton(this);
@@ -365,7 +368,7 @@ function CullDialog() {
         if (self.filesTreeBox.selectedNodes.length > 0) {
             var node = self.filesTreeBox.selectedNodes[0];
             currentIndex = self.filesTreeBox.childIndex(node);
-            self.updatePreview();
+//            self.updatePreview();
         }
     };
 
@@ -449,7 +452,6 @@ function CullDialog() {
             currentIndex = index;
 	    console.writeln("Setting current node to " + index);
             self.filesTreeBox.currentNode = self.filesTreeBox.child(index);
-	    self.filesTreeBox.currentNode.selected = true;
 	    self.filesTreeBox.currentNode.selected = !self.filesTreeBox.currentNode.selected;
             self.updatePreview();
         }
