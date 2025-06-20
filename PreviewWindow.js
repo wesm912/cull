@@ -40,6 +40,21 @@
 #include "AutoStretch.js"
 #include "Reticle.js"
 
+function Cache() {
+    this.__base__ = Object;
+    this.__base__();
+
+    this.cache = {};
+
+    this.get = (path) => {
+	return this.cache[path] || null;
+    }
+
+    this.set = (path, obj) => {
+	this.cache[path] =  obj;
+    }
+};
+
 function PreviewWindow( parent )
 {
     this.__base__ = Frame;
@@ -55,18 +70,25 @@ function PreviewWindow( parent )
 //    this.cullWindow.show();
     this.hide(); //add controls later
     this.reticle = new Reticle();
+    this.cache = new Cache();
     
     this.SetImage = function( path )
     {
 	if (this.imageWindow && !this.imageWindow.isNull) {
 	    this.imageWindow.forceClose();
 	}
-	var window = ImageWindow.open(path)[0];
-        if (window && window.isValidView && !window.isNull) {
-	    this.imageWindow = window;
-	    this.view = window.mainView;
-	    this.image = window.mainView.image;
-	    this.showImage();
+	let bmp = this.cache.get(path);
+	if (bmp !== null) {
+	    this.showImageFromCache(bmp);
+	} else {
+	    var window = ImageWindow.open(path)[0];
+            if (window && window.isValidView && !window.isNull) {
+		this.imageWindow = window;
+		this.view = window.mainView;
+		this.image = window.mainView.image;
+		this.showImage();
+		this.cache.set(path, this.cullWindow.mainView.image.render());
+	    }
 	}
    };
 
@@ -81,6 +103,13 @@ function PreviewWindow( parent )
 	}
     };
     
+    this.showImageFromCache = function(bmap) {
+	this.cullWindow.mainView.beginProcess();
+	this.cullWindow.mainView.image.blend(bmap);
+	this.cullWindow.mainView.endProcess();
+	this.cullWindow.updateViewport();
+    };
+	
     this.showImage = function() {
 	console.writeln("show");
 	try {
@@ -110,6 +139,7 @@ function PreviewWindow( parent )
 			this.cullWindow.mainView.endProcess();	
 		    }
 		    this.reticle.draw(this.cullWindow, image.width/25);
+
 		    let  p = this.parent.window.position;
 		    let cp = new Point;
 		    cp.x = p.x - this.cullWindow.width -5;
