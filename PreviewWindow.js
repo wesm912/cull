@@ -53,6 +53,10 @@ function Cache() {
     this.set = (path, obj) => {
 	this.cache[path] =  obj;
     }
+
+    this.clear = () => {
+	this.cache = {};
+    }
 };
 
 function PreviewWindow( parent )
@@ -104,7 +108,7 @@ function PreviewWindow( parent )
     };
     
     this.showImageFromCache = function(bmap) {
-	this.cullWindow.mainView.beginProcess();
+	this.cullWindow.mainView.beginProcess(UndoFlag_NoSwapFile);
 	this.cullWindow.mainView.image.blend(bmap);
 	this.cullWindow.mainView.endProcess();
 	this.cullWindow.updateViewport();
@@ -120,12 +124,12 @@ function PreviewWindow( parent )
 		var midY = (image.height)/2;
 
 		if ( image ) {
-		    this.view.beginProcess();
+		    this.view.beginProcess(UndoFlag_NoSwapFile);
 		    image.colorSpace = ColorSpace_RGB;
 		    image.resample(CULL_W, CULL_H, ResizeMode_AbsolutePixels, AbsoluteResizeMode_ForceWidth);
 		    this.view.endProcess();
 		    this.cullWindow.mainView.image.resetSelections();
-		    this.cullWindow.mainView.beginProcess();
+		    this.cullWindow.mainView.beginProcess(UndoFlag_NoSwapFile);
 		    this.cullWindow.mainView.image.selectedChannel = 0;
 		    this.cullWindow.mainView.image.assign(image);
 		    let autoStretch = new AutoStretch;
