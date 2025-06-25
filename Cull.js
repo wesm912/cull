@@ -5,7 +5,7 @@
 
 #feature-id    Utilities > Advanced Blink Replacement
 
-#define TITLE "Advanced Blink Replacement"
+#define TITLE "Cull Imagest"
 #define VERSION "1.0"
 #include <pjsr/NumericControl.jsh>
 #include <pjsr/BRQuadTree.jsh>
@@ -109,8 +109,11 @@ function FileManager() {
 	    return;
 	var message = new MessageBox("Are you sure you want to delete " +
 				     (files.length >1 ? "these files" : "this file") ,
-				     "Delete Files", 0, 1);
-	if (message.execute()) {
+				     "Delete Files", 0, 1, 2);
+	let ret = message.execute();
+	console.criticalln("message.execute() returned " + ret);
+	return ret;
+	if (StdButton_Ok == message.execute()) {
 	    for (let i = 0; i < files.length; i++) {
 		File.remove(files[i].path);
 	    }
@@ -131,7 +134,7 @@ function CullDialog() {
     this.focusStyle = 0x02;//keypress events
     // UI Controls
     this.filesTreeBox = new TreeBox(this);
-    this.filesTreeBox.setMinSize(400, 300);
+    this.filesTreeBox.setMinSize(300, 400);
     this.filesTreeBox.numberOfColumns = 2;
     this.filesTreeBox.headerVisible = true;
     this.filesTreeBox.setHeaderText(0,  "✓ / ✗");
@@ -394,10 +397,12 @@ function CullDialog() {
 	console.show()
 	console.criticalln("deleting file at path " + fileObj.path);
 	console.criticalln("fileList length before delete: " + fileList.length);
-	fileManager.deleteFiles([fileObj]);
-	fileObj.moved = true;
-	console.criticalln("fileList length after delete: " + fileList.length);
-	this.updateFileList();
+	let proceed = fileManager.deleteFiles([fileObj]);
+	if (proceed == StdButton_Ok) {
+	    fileObj.moved = true;
+	    this.updateFileList();
+	    console.criticalln("fileList length after delete: " + fileList.length);
+	}
     };
     
     this.prevButton.onClick = function() {
