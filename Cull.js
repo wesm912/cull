@@ -102,7 +102,21 @@ function FileManager() {
         }
         return moved;
     };
-}
+
+    this.deleteFiles = (files) => {
+	
+	if (files == null || files.length == 0)
+	    return;
+	var message = new MessageBox("Are you sure you want to delete " +
+				     (files.length >1 ? "these files" : "this file") ,
+				     "Delete Files", 0, 1);
+	if (message.execute()) {
+	    for (let i = 0; i < files.length; i++) {
+		File.remove(files[i].path);
+	    }
+	}
+    };
+};
 
 
 // Main dialog class
@@ -177,15 +191,15 @@ function CullDialog() {
     
     this.keepButton = new PushButton(this)
     this.keepButton.text = "Keep";
-    this.keepButton.icon = new Bitmap(dir + "/icons8-k-key-100.png");
+    this.keepButton.icon = new Bitmap(dir + "/icons/icons8-k-key-100.png");
 
     this.cullButton = new PushButton(this)
     this.cullButton.text = "Cull";
-    this.cullButton.icon = new Bitmap(dir + "/icons8-x-key-100.png");
+    this.cullButton.icon = new Bitmap(dir + "/icons/icons8-x-key-100.png");
 
     this.trashButton = new PushButton(this)
     this.trashButton.text = "Really Delete";
-    this.trashButton.icon = new Bitmap(dir + "/icons8-remove-100.png");
+    this.trashButton.icon = new Bitmap(dir + "/icons/icons8-remove-100.png");
     
 
     // Playback controls
@@ -320,9 +334,9 @@ function CullDialog() {
     };
 
     this.keepButton.onClick = () => {
-	let msg = new MessageBox("Please choose a directory to hold files to keep");
-	msg.execute();
         if (!fileManager.keepDirectory) {
+	    let msg = new MessageBox("Please choose a directory to hold files to keep");
+	    msg.execute();
             fileManager.keepDirectory = this.getDirectory("Choose a directory for saved images");
 	}
         if (!fileManager.keepDirectory) {
@@ -338,10 +352,10 @@ function CullDialog() {
 	this.updateFileList();
     }
 
-    this.moveRejectButton.onClick = function() {
-	let msg = new MessageBox("Please choose a directory to hold files to remove");
-	msg.execute();
+    this.moveRejectButton.onClick = ( ) => {
         if (!fileManager.rejectDirectory) {
+	    let msg = new MessageBox("Please choose a directory to hold files to remove");
+	    msg.execute();
             fileManager.rejectDirectory = this.getDirectory("Choose a directory for saved images");
 	}
         if (!fileManager.rejectDirectory) {
@@ -354,6 +368,38 @@ function CullDialog() {
         self.updateFileList();
     };
 
+    this.cullButton.onClick = ( ) => {
+        if (!fileManager.rejectDirectory) {
+	    let msg = new MessageBox("Please choose a directory to hold files to remove");
+	    msg.execute();
+            fileManager.rejectDirectory = this.getDirectory("Choose a directory for saved images");
+	}
+        if (!fileManager.rejectDirectory) {
+	    return;  //Canceled
+	}
+ 	let file = fileList[currentIndex];
+	file.keep = false;
+	file.reject = true;
+	console.show();
+	console.writeln("Chose file " + file.path + ", " + file.name + ", " + file.keep);
+	console.writeln("Rejectdirectory is " + fileManager.rejectDirectory);
+	fileManager.moveFiles([file], fileManager.keepDirectory, "reject");
+	this.updateFileList();
+    };
+
+    this.trashButton.onClick = () => {
+	if (fileList.length == 0)
+	    return;
+	let fileObj = fileList[currentIndex];
+	console.show()
+	console.criticalln("deleting file at path " + fileObj.path);
+	console.criticalln("fileList length before delete: " + fileList.length);
+	fileManager.deleteFiles([fileObj]);
+	fileObj.moved = true;
+	console.criticalln("fileList length after delete: " + fileList.length);
+	this.updateFileList();
+    };
+    
     this.prevButton.onClick = function() {
         if (currentIndex > 0) {
             currentIndex--;
