@@ -5,7 +5,7 @@
 
 #feature-id    Utilities > Advanced Blink Replacement
 
-#define TITLE "Cull Imagest"
+#define TITLE "Cull Images"
 #define VERSION "1.0"
 #include <pjsr/NumericControl.jsh>
 #include <pjsr/BRQuadTree.jsh>
@@ -194,15 +194,15 @@ function CullDialog() {
     
     this.keepButton = new PushButton(this)
     this.keepButton.text = "Keep";
-    this.keepButton.icon = new Bitmap(dir + "/icons/icons8-k-key-100.png");
+    this.keepButton.icon = new Bitmap(dir + "/icons/icons8-k-key-50.png");
 
     this.cullButton = new PushButton(this)
     this.cullButton.text = "Cull";
-    this.cullButton.icon = new Bitmap(dir + "/icons/icons8-x-key-100.png");
+    this.cullButton.icon = new Bitmap(dir + "/icons/icons8-x-key-50.png");
 
     this.trashButton = new PushButton(this)
     this.trashButton.text = "Really Delete";
-    this.trashButton.icon = new Bitmap(dir + "/icons/icons8-remove-100.png");
+    this.trashButton.icon = new Bitmap(dir + "/icons/icons8-remove-50.png");
     
 
     // Playback controls
@@ -276,15 +276,16 @@ function CullDialog() {
     // Event handlers
     var self = this;
 
-    this.inputDirButton.onClick = function() {
+    this.inputDirButton.onClick = ( ) => {
         var dialog = new GetDirectoryDialog();
         if (dialog.execute()) {
             fileManager.inputDirectory = dialog.directory;
             fileList = fileManager.findFiles(fileManager.inputDirectory, true);
-            self.updateFileList();
+            this.updateFileList();
             if (fileList.length > 0) {
                 currentIndex = 0;
-                self.selectFile(0);
+                this.selectFile(0);
+		this.previewWindow.preComputeCache(fileList.map( (f) => f.path));
             }
         }
     };
@@ -321,9 +322,9 @@ function CullDialog() {
 
 
     this.moveKeepButton.onClick = () => {
-	let msg = new MessageBox("Please choose a directory to hold files to keep");
-	msg.execute();
         if (!fileManager.keepDirectory) {
+	    let msg = new MessageBox("Please choose a directory to hold files to keep");
+	    msg.execute();
             fileManager.keepDirectory = this.getDirectory("Choose a directory for saved images");
 	}
         if (!fileManager.keepDirectory) {
@@ -404,6 +405,18 @@ function CullDialog() {
 	    console.criticalln("fileList length after delete: " + fileList.length);
 	}
     };
+
+    this.nextFile = () =>
+    {
+	if (fileList.length < 1)
+	    return
+        if (currentIndex < fileList.length - 1) {
+            currentIndex++;
+        } else {
+	    currentIndex= 0;
+	}
+        self.selectFile(currentIndex);
+    };
     
     this.prevButton.onClick = function() {
         if (currentIndex > 0) {
@@ -469,6 +482,13 @@ function CullDialog() {
     // };
     
     // Keyboard handling
+
+    this.keepButton.onKeyPress = (key, modifiers) =>
+    {
+	if (key == Key_K ) {
+	}
+    };
+    
     this.onKeyPress = function(key, modifiers) {
 	let wantsKey = false;
 	console.writeln("Got key " + key + ", modifiers " + modifiers);
@@ -670,19 +690,40 @@ function CullDialog() {
 
     
 //    this.leftSizer.add(this.playbackSizer);
-//    this.leftSizer.add(this.stretchControlsSizer);
+    //    this.leftSizer.add(this.stretchControlsSizer);
+
+    this.toggleSectionHandler = ( section, toggleBegin ) =>
+   {
+      if ( !toggleBegin )
+      {
+         section.dialog.setVariableHeight();
+         section.dialog.adjustToContents();
+         if ( section.dialog.quickSectionBar.isCollapsed() )
+            section.dialog.setFixedHeight();
+         else
+            section.dialog.setMinHeight();
+      }
+   }
+    this.quickControl = new Control(this);
+    this.quickSectionBar = new SectionBar(this, "Quick Mode");
+    this.quickSectionBar.onToggleSection = this.toggleSectionHandler;
+    this.quickControl.sizer = new VerticalSizer();
+
     this.actionButtonSizer.add(this.keepButton);
     this.actionButtonSizer.add(this.cullButton);
     this.actionButtonSizer.add(this.trashButton);
-					       
+    this.quickControl.sizer.add(this.actionButtonSizer);
+    this.quickSectionBar.setSection(this.quickControl);
+//    this.quickSectionBar.enableCheckBox();
+
     this.rightSizer = new VerticalSizer;
     this.rightSizer.margin = 6;
     this.rightSizer.spacing = 4;
     this.rightSizer.add(this.filesTreeBox, 100);
     this.rightSizer.add(this.directorySizer, 100);
-//    this.rightSizer.add(this.keepDirSizer, 100);
-//    this.rightSizer.add(this.rejectDirSizer, 100);
-    this.rightSizer.add(this.actionButtonSizer, 100);
+
+    this.rightSizer.add(this.quickSectionBar);
+    this.rightSizer.add(this.quickControl);
     this.rightSizer.add(this.moveSizer, 100);
     this.rightSizer.add(this.playbackSizer, 100);
     this.sizer = this.rightSizer;
