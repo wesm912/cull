@@ -27,12 +27,14 @@ function Reticle()
 		} finally {
 		    graphics.end();
 		}
-		view.beginProcess();
+		view.beginProcess(UndoFlag_NoSwapFile);
 		image.blend(bmap);
 		view.endProcess();
+		return bmap;
 	    }
 	}
     }
+    return null;
 };
 
 Reticle.prototype = new Object();

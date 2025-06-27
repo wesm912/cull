@@ -162,7 +162,57 @@ function PreviewWindow( parent )
 
 	}
 
-   };
+    };
+
+    this.computeImageBitmap = (view) => {
+	if ( view.image ) {
+	    let image = view.image;
+	    view.beginProcess(UndoFlag_NoSwapFile);
+	    image.colorSpace = ColorSpace_RGB;
+	    image.resample(CULL_W, CULL_H, ResizeMode_AbsolutePixels, AbsoluteResizeMode_ForceWidth);
+	    view.endProcess();
+
+	    let autoStretch = new AutoStretch;
+	    try {
+		autoStretch.HardApply(view, false); //true, -2.80, 0.25);
+	    } catch (ex) {
+		console.writeln(ex.stack);
+		//		    console.writeln("Fatal error " + ex );
+		throw(ex);
+	    } finally {
+
+	    }
+	    this.reticle.draw(this.cullWindow, image.width/25);
+	    return image.render();
+	}
+    };
+    
+    this.preComputeCache = (filePaths) => {
+	if (!filePaths || filePaths.length < 1) {
+	    return;
+	}
+	// Console Progress
+	let total = filePaths.length;
+	console.abortEnabled = true;
+	console.show();
+	// let progress = new ProgressDialog();
+	// progress.setRange(0, total);
+	// progress.show();
+	for (let i = 0; i < filePaths.length; i++) {
+	    let path = filePaths[i];
+	    if (this.cache.get(path) == null) {
+		try {
+		    let window = ImageWindow.open(path)[0];
+		    let view = window.mainView;
+		    this.cache.set(path, this.computeImageBitmap(view));
+		    console.noteln("Processed " + i + " out of " + total + " images");
+//		    progress.setValue(i);
+		} catch (exc) {
+		    console.criticalln(exc);
+		}
+	    }
+	}
+    };
 
 }
 
