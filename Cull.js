@@ -143,37 +143,32 @@ function CullDialog() {
     this.filesTreeBox.alternateRowColor = true;
     this.filesTreeBox.multipleSelection = false;
 
-    // Preview Dialog
 
     // Directory controls
     this.inputDirButton = new PushButton(this);
     this.inputDirButton.text = "Load Directory...";
-    let inputBmap = new Bitmap(":/icons/folder-open.png");
-    inputBmap = inputBmap.scaledTo(500/inputBmap.width);
-    this.inputDirButton.icon = inputBmap;
+    let inputDirBmap = new Bitmap(":/icons/folder-open.png");
+    let d = this.logicalPixelsToPhysical( 1 );
+    d = 40*d;
+    console.noteln("d is " + d + " after scaling");
+    inputDirBmap = inputDirBmap.scaledTo(d);
+    this.inputDirButton.icon = inputDirBmap;
 //  this.inputDirButton.icon = this.scaledResource(":/icons/folder-open.png")
   
     
     this.inputFilesButton = new PushButton(this);
     this.inputFilesButton.text = "Load Files...";
-    let inputBmap = new Bitmap(":/icons/file-list.png");
-    inputBmap = inputBmap.scaledTo(500/inputBmap.width);
-    this.inputFilesButton.icon = inputBmap;//this.scaledResource(":/icons/file-list.png")
+    let inputFilesBmap = new Bitmap(":/icons/file-list.png");
+    console.noteln("d is " + d + " after scaling");
+    inputFilesBmap = inputFilesBmap.scaledTo(d);
+    this.inputFilesButton.icon = inputFilesBmap;//this.scaledResource(":/icons/file-list.png")
 
     this.clearAllFilesButton = new PushButton(this);
     this.clearAllFilesButton.text = "Clear All";
     let clearAllBmap = new Bitmap(":/icons/clear-inverted.png");
-    clearAllBmap = clearAllBmap.scaledTo(500/clearAllBmap.width);
+    console.noteln("d is " + d + " after scaling");
+    clearAllBmap = clearAllBmap.scaledTo(d);
     this.clearAllFilesButton.icon = clearAllBmap;
-//    this.clearAllFilesButton.icon = this.scaledResource(":/icons/clear-inverted.png")
-
-    // this.keepDirEdit = new Edit(this);
-    // this.keepDirButton = new PushButton(this);
-    // this.keepDirButton.text = "Keep...";
-
-    // this.rejectDirEdit = new Edit(this);
-    // this.rejectDirButton = new PushButton(this);
-    // this.rejectDirButton.text = "Reject...";
 
     // File operation controls
     this.moveKeepButton = new PushButton(this);
@@ -285,7 +280,7 @@ function CullDialog() {
             if (fileList.length > 0) {
                 currentIndex = 0;
                 this.selectFile(0);
-		this.previewWindow.preComputeCache(fileList.map( (f) => f.path));
+//		this.previewWindow.preComputeCache(fileList.map( (f) => f.path));
             }
         }
     };
@@ -639,23 +634,6 @@ function CullDialog() {
         }
     };
 
-    // Layout
-    // this.directorySizer = new HorizontalSizer;
-    // this.directorySizer.margin = 6;
-    // this.directorySizer.spacing = 4;
-    // this.directorySizer.add(this.inputDirButton,2, Align_Center);
-    // this.directorySizer.add(this.inputFilesButton,2, Align_Center);
-    // this.directorySizer.add(this.clearAllFilesButton,2, Align_Center);
-//    this.directorySizer.addSpacing(20, true);
-
-
-    // this.moveSizer = new HorizontalSizer;
-    // this.moveSizer.margin = 6;
-    // this.moveSizer.spacing = 4;
-    // this.moveSizer.add(this.moveKeepButton);
-    // this.moveSizer.add(this.moveRejectButton);
-    // this.moveSizer.addStretch();
-
     var label = new Label(this);
     label.text = "Speed: ";
     this.playbackSizer = new HorizontalSizer;
@@ -681,46 +659,91 @@ function CullDialog() {
 
     // Page 1 -- Bulk operations mode
     this.commonButtonsSizer= new VerticalSizer(this);
-    this.commonButtonsSizer.add(this.inputDirButton);
-    this.commonButtonsSizer.add(this.inputFilesButton);
-    this.commonButtonsSizer.add(this.clearAllFilesButton);
-    this.commonButtonsSizer.addStretch();
     
     this.bulkButtonsSizer = new VerticalSizer(this);
+    this.bulkButtonsSizer.margin = 4;
+    this.bulkButtonsSizer.spacing = 6;
+    this.bulkButtonsSizer.add(this.inputDirButton);
+    this.bulkButtonsSizer.add(this.inputFilesButton);
+    this.bulkButtonsSizer.add(this.clearAllFilesButton);
     this.bulkButtonsSizer.add(this.moveKeepButton);
     this.bulkButtonsSizer.add(this.moveRejectButton);
-    this.bulkOpsSizer = new VerticalSizer(this);
-    this.bulkOpsSizer.add(this.commonButtonsSizer);
-    this.bulkOpsSizer.add(this.bulkButtonsSizer);
+    this.bulkButtonsSizer.addStretch();
 
     this.bulkPageControlsGroupBox = new GroupBox(this);
-    this.bulkPageControlsGroupBox.sizer = this.bulkOpsSizer;
-    this.bulkPageControlsGroupBox.adjustToContents();
+    this.bulkPageControlsGroupBox.sizer = this.bulkButtonsSizer;
+//    this.bulkPageControlsGroupBox.adjustToContents();
     
-
+    // Hide the action buttons initially
+    this.actionButtonControl = new Control(this)
+    //    this.actionButtonControl.hide();
+    this.actionButtonSizer = new VerticalSizer();
     this.actionButtonSizer.add(this.keepButton);
     this.actionButtonSizer.add(this.cullButton);
     this.actionButtonSizer.add(this.trashButton);
+    this.actionButtonControl.sizer = this.actionButtonSizer;
 
     this.bulkPage = new Control(this);
     this.bulkPage.sizer = new HorizontalSizer(this);
     with (this.bulkPage.sizer) {
         margin = 6;
         spacing = 6;
-        addSpacing( 4 );
 	add(this.filesTreeBox,75);
-//        addSpacing( -6 );
 	add(this.bulkPageControlsGroupBox, 25);
-        addSpacing( 4 );
     }
-    
-//    this.bulkPage.adjustToContents();
+
+    this.blinkPage = new Control(this);
+    this.blinkPage.sizer = new HorizontalSizer();
+    this.blinkPage.sizer.margin = 6;
+    this.blinkPage.sizer.spacing = 6;
+    this.blinkPage.sizer.add(this.actionButtonControl,25);
+
 
     // tab box for pages
     this.tabBox = new TabBox();
     this.tabBox.addPage(this.bulkPage, "Bulk ops");
-    this.tabBox.currentPageIndex = 0;
+    this.tabBox.addPage(this.blinkPage, "Fast cull");
+    this.tabBox.onPageSelected = (pageIndex) => {
+	if (pageIndex == 0) {
+	    if ( !this.bulkButtonsSizer.has(this.inputDirButton)) {
+		this.actionButtonSizer.remove( this.inputDirButton);
+		this.bulkButtonsSizer.insert(0, this.inputDirButton);
+	    }
+	    if ( !this.bulkButtonsSizer.has(this.inputFilesButton)) {
+		this.actionButtonSizer.remove( this.inputFilesButton);
+		this.bulkButtonsSizer.insert(1, this.inputFilesButton);
+	    }
+	    if ( !this.bulkButtonsSizer.has(this.clearAllFilesButton)) {
+		this.actionButtonSizer.remove(this.clearAllFilesButton);
+		this.bulkButtonsSizer.insert(2, this.clearAllFilesButton);
+	    }
+	    if (!this.bulkPage.sizer.has(this.filesTreeBox)) {
+		this.blinkPage.sizer.remove(this.filesTreeBox);
+		this.bulkPage.sizer.insert(0, this.filesTreeBox, 75);
+		console.noteln("Swapping treebox for page " + pageIndex);
+	    }
+	} else if (pageIndex == 1) {
+	    if ( !this.actionButtonSizer.has(this.inputDirButton)) {
+		this.bulkButtonsSizer.remove( this.inputDirButton);
+		this.actionButtonSizer.insert(0, this.inputDirButton);
+	    }
+	    if ( !this.actionButtonSizer.has(this.inputFilesButton)) {
+		this.bulkButtonsSizer.remove( this.inputFilesButton);
+		this.actionButtonSizer.insert(1, this.inputFilesButton);
+	    }
+	    if ( !this.actionButtonSizer.has(this.clearAllFilesButton)) {
+		this.bulkButtonsSizer.remove(this.clearAllFilesButton);
+		this.actionButtonSizer.insert(2, this.clearAllFilesButton);
+	    }
+	    if (!this.blinkPage.sizer.has(this.filesTreeBox)) {
+		console.noteln("Swapping treebox for page " + pageIndex);
+		this.bulkPage.sizer.remove(this.filesTreeBox);
+		this.blinkPage.sizer.insert(0, this.filesTreeBox, 75);
+	    }
+	}
+    };
 
+    this.tabBox.currentPageIndex = 0;
     this.windowTitle = TITLE + " v" + VERSION;
     this.minWidth = 400; //>>??
     this.minHeight = 600;
