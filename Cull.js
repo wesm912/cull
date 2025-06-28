@@ -134,7 +134,7 @@ function CullDialog() {
     this.focusStyle = 0x02;//keypress events
     // UI Controls
     this.filesTreeBox = new TreeBox(this);
-    this.filesTreeBox.setMinSize(300, 400);
+    this.filesTreeBox.setMinSize(300, 300);
     this.filesTreeBox.numberOfColumns = 2;
     this.filesTreeBox.headerVisible = true;
     this.filesTreeBox.setHeaderText(0,  "✓ / ✗");
@@ -640,21 +640,21 @@ function CullDialog() {
     };
 
     // Layout
-    this.directorySizer = new HorizontalSizer;
-    this.directorySizer.margin = 6;
-    this.directorySizer.spacing = 4;
-    this.directorySizer.add(this.inputDirButton,2, Align_Center);
-    this.directorySizer.add(this.inputFilesButton,2, Align_Center);
-    this.directorySizer.add(this.clearAllFilesButton,2, Align_Center);
+    // this.directorySizer = new HorizontalSizer;
+    // this.directorySizer.margin = 6;
+    // this.directorySizer.spacing = 4;
+    // this.directorySizer.add(this.inputDirButton,2, Align_Center);
+    // this.directorySizer.add(this.inputFilesButton,2, Align_Center);
+    // this.directorySizer.add(this.clearAllFilesButton,2, Align_Center);
 //    this.directorySizer.addSpacing(20, true);
 
 
-    this.moveSizer = new HorizontalSizer;
-    this.moveSizer.margin = 6;
-    this.moveSizer.spacing = 4;
-    this.moveSizer.add(this.moveKeepButton);
-    this.moveSizer.add(this.moveRejectButton);
-    this.moveSizer.addStretch();
+    // this.moveSizer = new HorizontalSizer;
+    // this.moveSizer.margin = 6;
+    // this.moveSizer.spacing = 4;
+    // this.moveSizer.add(this.moveKeepButton);
+    // this.moveSizer.add(this.moveRejectButton);
+    // this.moveSizer.addStretch();
 
     var label = new Label(this);
     label.text = "Speed: ";
@@ -669,91 +669,72 @@ function CullDialog() {
     this.playbackSizer.add(this.speedComboBox);
     this.playbackSizer.addStretch();
 
-    // this.stretchControlsSizer = new VerticalSizer;
-    // this.stretchControlsSizer.margin = 6;
-    // this.stretchControlsSizer.spacing = 4;
+    /*
+      page support
+      page 1 and page 2 share some controls, namely the treebox, load directory, clear all
+      buttons
+      Page 1 is the bulk operations page, so has controls to move checked and move rejected
+      items as a group.
+      Page 2 is "blink" mode, so keyboard shortcut buttons for immediate save, immediate cull,
+      and immediate delete are present
+    */
 
-    // this.stretchModeSizer = new HorizontalSizer;
-    // this.stretchModeSizer.add(this.stretchLabel);
-    // this.stretchModeSizer.add(this.stretchComboBox);
-    // this.stretchModeSizer.addStretch();
-
-    // this.stretchControlsSizer.add(this.stretchModeSizer);
-    // this.stretchControlsSizer.add(this.shadowsSlider);
-    // this.stretchControlsSizer.add(this.highlightsSlider);
-    // this.stretchControlsSizer.add(this.midtonesSlider);
-
-    // this.leftSizer = new VerticalSizer;
-    // this.leftSizer.margin = 6;
-    // this.leftSizer.spacing = 4;
-    // this.leftSizer.add(this.previewWindow, 100);
-
+    // Page 1 -- Bulk operations mode
+    this.commonButtonsSizer= new VerticalSizer(this);
+    this.commonButtonsSizer.add(this.inputDirButton);
+    this.commonButtonsSizer.add(this.inputFilesButton);
+    this.commonButtonsSizer.add(this.clearAllFilesButton);
+    this.commonButtonsSizer.addStretch();
     
-//    this.leftSizer.add(this.playbackSizer);
-    //    this.leftSizer.add(this.stretchControlsSizer);
+    this.bulkButtonsSizer = new VerticalSizer(this);
+    this.bulkButtonsSizer.add(this.moveKeepButton);
+    this.bulkButtonsSizer.add(this.moveRejectButton);
+    this.bulkOpsSizer = new VerticalSizer(this);
+    this.bulkOpsSizer.add(this.commonButtonsSizer);
+    this.bulkOpsSizer.add(this.bulkButtonsSizer);
 
-    this.toggleSectionHandler = ( section, toggleBegin ) =>
-   {
-      if ( !toggleBegin )
-      {
-         section.dialog.setVariableHeight();
-         section.dialog.adjustToContents();
-         if ( section.dialog.quickSectionBar.isCollapsed() )
-            section.dialog.setFixedHeight();
-         else
-            section.dialog.setMinHeight();
-      }
-   }
-    this.quickControl = new Control(this);
-    this.quickSectionBar = new SectionBar(this, "Quick Mode");
-    this.quickSectionBar.onToggleSection = this.toggleSectionHandler;
-    this.quickControl.sizer = new VerticalSizer();
+    this.bulkPageControlsGroupBox = new GroupBox(this);
+    this.bulkPageControlsGroupBox.sizer = this.bulkOpsSizer;
+    this.bulkPageControlsGroupBox.adjustToContents();
+    
 
     this.actionButtonSizer.add(this.keepButton);
     this.actionButtonSizer.add(this.cullButton);
     this.actionButtonSizer.add(this.trashButton);
-    this.quickControl.sizer.add(this.actionButtonSizer);
-    this.quickSectionBar.setSection(this.quickControl);
-//    this.quickSectionBar.enableCheckBox();
 
-    this.rightSizer = new VerticalSizer;
-    this.rightSizer.margin = 6;
-    this.rightSizer.spacing = 4;
-    this.rightSizer.add(this.filesTreeBox, 100);
-    this.rightSizer.add(this.directorySizer, 100);
+    this.bulkPage = new Control(this);
+    this.bulkPage.sizer = new HorizontalSizer(this);
+    with (this.bulkPage.sizer) {
+        margin = 6;
+        spacing = 6;
+        addSpacing( 4 );
+	add(this.filesTreeBox,75);
+//        addSpacing( -6 );
+	add(this.bulkPageControlsGroupBox, 25);
+        addSpacing( 4 );
+    }
+    
+//    this.bulkPage.adjustToContents();
 
-    this.rightSizer.add(this.quickSectionBar);
-    this.rightSizer.add(this.quickControl);
-    this.rightSizer.add(this.moveSizer, 100);
-    this.rightSizer.add(this.playbackSizer, 100);
-    this.sizer = this.rightSizer;
-    this.sizer.add(this.buttons_Sizer, 50);
-    // this.mainSizer = new HorizontalSizer;
-    // this.mainSizer.margin = 6;
-    // this.mainSizer.spacing = 4;
-    // this.mainSizer.add(this.leftSizer, 50);
-    // this.mainSizer.add(this.rightSizer, 50);
-
-    // this.sizer = new VerticalSizer;
-    // this.sizer.add(this.mainSizer, 50);
-    // this.sizer.add(this.buttons_Sizer, 50);
-
-    // this.controlsSizer = new VerticalSizer;
-    // this.controlsSizer.margin = 6;
-    // this.controlsSizer.spacing = 4;
-    // this.controlsSizer.add(this.directorySizer);
-    // this.controlsSizer.add(this.keepDirSizer);
-    // this.controlsSizer.add(this.rejectDirSizer);
-    // this.controlsSizer.add(this.moveSizer);
-    //this.controlsSizer.add(this.mainSizer, 100);
-
-//    this.sizer = this.mainSizer;
+    // tab box for pages
+    this.tabBox = new TabBox();
+    this.tabBox.addPage(this.bulkPage, "Bulk ops");
+    this.tabBox.currentPageIndex = 0;
 
     this.windowTitle = TITLE + " v" + VERSION;
-    this.minWidth = 800; //>>??
+    this.minWidth = 400; //>>??
     this.minHeight = 600;
 //    this.setMinSize(800, 600);
 
+    this.sizer = new VerticalSizer;
+    this.sizer.spacing = 6;
+    this.sizer.margin = 4;
+    this.sizer.add( this.tabBox );
+    this.sizer.add(this.playbackSizer);
+    this.sizer.add( this.buttons_Sizer );
+
+   this.setMinWidth( 620 );
+ 
     // Cleanup on close
     this.onClose = function() {
         if (playTimer) {
