@@ -186,8 +186,11 @@ function PreviewWindow( parent )
 	    return image.render();
 	}
     };
-    
-    this.preComputeCache = (filePaths) => {
+
+    this.cancelPreCompute = false;
+    this.preComputeCache = (filePaths, callback) => {
+	console.show();
+	console.noteln(format("preComputeCache passed %d", filePaths.length));
 	if (!filePaths || filePaths.length < 1) {
 	    return;
 	}
@@ -195,10 +198,12 @@ function PreviewWindow( parent )
 	let total = filePaths.length;
 	console.abortEnabled = true;
 	console.show();
-	// let progress = new ProgressDialog();
-	// progress.setRange(0, total);
-	// progress.show();
+
 	for (let i = 0; i < filePaths.length; i++) {
+	    if (this.cancelPreCompute == true) {
+		this.cancelPreCompute = false;
+		break;
+	    }
 	    let path = filePaths[i];
 	    if (this.cache.get(path) == null) {
 		try {
@@ -206,7 +211,7 @@ function PreviewWindow( parent )
 		    let view = window.mainView;
 		    this.cache.set(path, this.computeImageBitmap(view));
 		    console.noteln("Processed " + i + " out of " + total + " images");
-//		    progress.setValue(i);
+		    callback(i, filePaths.length);
 		} catch (exc) {
 		    console.criticalln(exc);
 		}

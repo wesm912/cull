@@ -26,6 +26,7 @@
 #include <pjsr/TextAlign.jsh>
 #include <pjsr/UndoFlag.jsh>
 #include "PreviewWindow.js"    
+#include "ProgressBar.js"    
 
 // Global variables
 //var dialog;
@@ -271,8 +272,66 @@ function CullDialog() {
     this.buttons_Sizer.addStretch();
     this.buttons_Sizer.add( this.ok_Button, 50, Align_Right );
 
+    /*
+     *
+     * progress bar insertion
+     *
+     */
+    this.progressInfoLabel= new Label(this);
+    this.progressInfoLabel.text = "(0/0)";
+    this.progressBar = new MyProgressBar(this)
+    this.progressBar.setScaledFixedSize( 400, 20 );
+    this.progressBar.callback = (count, total) =>
+    {
+	console.show();
+	console.noteln(format("In progress callback, count = %d, total = %d", count, total));
+	this.progressBar.value = count;
+	this.progressInfoLabel = format("%d/%d", count, total);
+	this.progressBar.update();
+	processEvents();
+    }
+
+    this.computeBitmapStartButton = new PushButton();
+    this.computeBitmapStartButton.text = "Start";
+    this.computeBitmapCancelButton = new PushButton();
+    this.computeBitmapCancelButton.text = "Cancel";
+
+    this.computeBitmapSizer = new HorizontalSizer();
+    this.computeBitmapSizer.margin = 6;
+    this.computeBitmapSizer.spacing = 4;
+    this.computeBitmapSizer.add(this.progressInfoLabel);
+    this.computeBitmapSizer.add(this.progressBar);
+    
+    this.computeControlsSizer = new HorizontalSizer();
+    this.computeControlsSizer.margin = 6;
+    this.computeControlsSizer.spacing = 4;
+    this.computeControlsSizer.add(this.computeBitmapStartButton, 0, Align_Left);
+    this.computeControlsSizer.add(this.computeBitmapCancelButton, 0, Align_Right);
+
+    this.computeSizer = new VerticalSizer(this)
+    this.computeSizer.add(this.computeBitmapSizer);
+    this.computeSizer.add(this.computeControlsSizer);
+
+    this.computeBitmapGroupBox = new GroupBox(this);
+    this.computeBitmapGroupBox.title = "Compute Bitmaps";
+    this.computeBitmapGroupBox.sizer = this.computeSizer;
+    
+    
     // Event handlers
     var self = this;
+
+    this.computeBitmapStartButton.onClick = function () 
+    {
+	console.show();
+	console.noteln("Passing list of files of length " + fileList.length);
+	self.previewWindow.preComputeCache(fileList.map( (f) => f.path), self.progressBar.callback);
+    }
+
+    this.computeBitmapCancelButton.onClick = () =>
+    {
+	this.computeBitmapGroupBox.hide();
+	this.previewWindow.cancelPreCompute = true;
+    }
 
     this.inputDirButton.onClick = ( ) => {
         var dialog = new GetDirectoryDialog();
@@ -281,9 +340,10 @@ function CullDialog() {
             fileList = fileManager.findFiles(fileManager.inputDirectory, true);
             this.updateFileList();
             if (fileList.length > 0) {
+		this.computeBitmapGroupBox.show();
                 currentIndex = 0;
                 this.selectFile(0);
-		//		this.previewWindow.preComputeCache(fileList.map( (f) => f.path));
+		//		
             }
         }
     };
@@ -306,6 +366,7 @@ function CullDialog() {
 	    
             self.updateFileList();
             if (fileList.length > 0) {
+		this.computeBitmapGroupBox.show();
                 currentIndex = 0;
                 self.selectFile(0);
             }
@@ -796,6 +857,8 @@ function CullDialog() {
     this.sizer.margin = 4;
     this.sizer.add( this.tabBox );
     this.sizer.add(this.playbackSizer);
+    this.computeBitmapGroupBox.hide();
+    this.sizer.add(this.computeBitmapGroupBox);
     this.sizer.add( this.buttons_Sizer );
 
    this.setMinWidth( 620 );
@@ -822,7 +885,6 @@ function main() {
     var dialog = new CullDialog();
     console.writeln(" Dialog focus style " + dialog.focusStyle);
     try {
-
 	dialog.execute();
     } catch (ex) {
 	console.writeln("Fatal: " + ex);
