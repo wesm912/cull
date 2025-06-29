@@ -283,11 +283,18 @@ function CullDialog() {
     this.progressBar.setScaledFixedSize( 400, 20 );
     this.progressBar.callback = (count, total) =>
     {
+	let pct = 0
+	if (total > 0) {
+	    pct = (count + 1)/total;
+	}
 	console.show();
-	console.noteln(format("In progress callback, count = %d, total = %d", count, total));
-	this.progressBar.value = count;
-	this.progressInfoLabel = format("%d/%d", count, total);
+	console.noteln(format("In progress callback, count = %d, total = %d", count + 1, total));
+	this.progressBar.value = pct;
+	let newLabel = format("(%d/%d)", count + 1, total);
+	this.progressInfoLabel.text = newLabel;
+	processEvents();
 	this.progressBar.update();
+	this.progressInfoLabel.update();
 	processEvents();
     }
 
@@ -333,6 +340,17 @@ function CullDialog() {
 	this.previewWindow.cancelPreCompute = true;
     }
 
+    this.computeBitmapGroupBox.onShow = () =>
+    {
+	let msg = new MessageBox("Start the process to pre-compute the bitmap cache",
+				 "Build Cache", StdIcon_Question, StdButton_Ok,
+				 StdButton_Cancel, 0, 1);
+	let ret = msg.execute();
+	if ( ret == StdButton_Ok ) {
+	    this.computeBitmapStartButton.onClick();
+	}
+    }
+	
     this.inputDirButton.onClick = ( ) => {
         var dialog = new GetDirectoryDialog();
         if (dialog.execute()) {

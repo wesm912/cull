@@ -189,8 +189,6 @@ function PreviewWindow( parent )
 
     this.cancelPreCompute = false;
     this.preComputeCache = (filePaths, callback) => {
-	console.show();
-	console.noteln(format("preComputeCache passed %d", filePaths.length));
 	if (!filePaths || filePaths.length < 1) {
 	    return;
 	}
@@ -210,7 +208,6 @@ function PreviewWindow( parent )
 		    let window = ImageWindow.open(path)[0];
 		    let view = window.mainView;
 		    this.cache.set(path, this.computeImageBitmap(view));
-		    console.noteln("Processed " + i + " out of " + total + " images");
 		    callback(i, filePaths.length);
 		} catch (exc) {
 		    console.criticalln(exc);
