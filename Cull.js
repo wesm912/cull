@@ -501,7 +501,7 @@ function CullDialog() {
     // 	if (key == Key_K ) {
     // 	}
     // };
-    
+
     this.onKeyPress = function(key, modifiers) {
 	let wantsKey = false;
 	console.show();
@@ -529,10 +529,16 @@ function CullDialog() {
 	    if (self.validateKeepDirectory() == StdButton_Ok) {
 		console.writeln("keypress K");
 		if (fileList.length > 0) {
-                    fileList[currentIndex].keep = !fileList[currentIndex].keep;
-                    fileList[currentIndex].reject = false;
-		    //		self.filesTreeBox.currentnode.selected = true;
-		    self.nextFile();
+		    if (mode == "bulk") {
+			fileList[currentIndex].keep = !fileList[currentIndex].keep;
+			fileList[currentIndex].reject = false;
+			self.nextFile()
+		    } else {
+			let file = fileList[currentIndex];
+			fileList[currentIndex].moved = true;
+			fileList[currentIndex].keep = true;
+			fileManager.moveFiles([file], fileManager.keepDirectory, "keep")
+		    }
                     self.updateFileList();
 		}
 	    }
@@ -576,6 +582,8 @@ function CullDialog() {
         }
 	return wantsKey;
     };
+
+    this.filesTreeBox.onKeyPress = this.onKeyPress;
 
     // Helper methods
     this.updateFileList = function() {
