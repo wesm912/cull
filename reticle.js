@@ -27,9 +27,9 @@ function Reticle()
 		} finally {
 		    graphics.end();
 		}
-		view.beginProcess(UndoFlag_NoSwapFile);
-		image.blend(bmap);
-		view.endProcess();
+		// view.beginProcess(UndoFlag_NoSwapFile);
+		// image.blend(bmap);
+		// view.endProcess();
 		return bmap;
 	    }
 	}

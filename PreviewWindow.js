@@ -66,6 +66,7 @@ function PreviewWindow( parent )
     this.parent = parent;
     const CULL_W = 600;
     const CULL_H = 400;
+    const PreviewSize = this.logicalPixelsToPhysical(202); // from Blink.cpp
     this.image = null;
     this.stretchedImage = null;
     var self = this;
@@ -75,23 +76,36 @@ function PreviewWindow( parent )
     this.hide(); //add controls later
     this.reticle = new Reticle();
     this.cache = new Cache();
-    
+
+    this.bitmapScale = function(image) {
+	let w = (image.width > image.height) ? PreviewSize :
+	    Math.round( PreviewSize *image.width()/image.height );
+	let h = (image.height > image.width) ? PreviewSize :
+	    Math.round( PreviewSize *image.height/image.width );
+	return {w:w, h:h};
+    };
+
     this.SetImage = function( path )
     {
+	console.noteln("SetImage passed path " + path);
 	if (this.imageWindow && !this.imageWindow.isNull) {
 	    this.imageWindow.forceClose();
 	}
 	let bmp = this.cache.get(path);
 	if (bmp !== null) {
+	    console.noteln("SetImage : cache hit");
 	    this.showImageFromCache(bmp);
 	} else {
+	    console.noteln("SetImage : cache miss");
 	    var window = ImageWindow.open(path)[0];
             if (window && window.isValidView && !window.isNull) {
 		this.imageWindow = window;
 		this.view = window.mainView;
 		this.image = window.mainView.image;
-		this.showImage();
-		this.cache.set(path, this.cullWindow.mainView.image.render());
+		this.showImage(window);
+		let scale = this.bitmapScale(this.image);
+		this.cache.set(path,
+			       this.cullWindow.mainView.image.render());			      //       this.cullWindow.mainView.image.render().scaledTo(scale.w/2, scale.h/2));
 	    }
 	}
    };
@@ -114,27 +128,27 @@ function PreviewWindow( parent )
 	this.cullWindow.updateViewport();
     };
 	
-    this.showImage = function() {
-	console.writeln("show");
+    this.showImage = function(window) {
+	console.noteln("showImage got arg " + window);
 	try {
-	    if (self.imageWindow != null && ! self.imageWindow.isNull) {
-		var view = self.imageWindow.mainView;
-		var image = self.view.image;
-		var midX = (image.width)/2;
-		var midY = (image.height)/2;
-
+	    if (window != null && ! window.isNull) {
+		let view = window.mainView;
+		let image = view.image
+		console.noteln("window, view, image: " + window+ " " + view + " " + image);
 		if ( image ) {
-		    this.view.beginProcess(UndoFlag_NoSwapFile);
+		    view.beginProcess(UndoFlag_NoSwapFile);
 		    image.colorSpace = ColorSpace_RGB;
 		    image.resample(CULL_W, CULL_H, ResizeMode_AbsolutePixels, AbsoluteResizeMode_ForceWidth);
-		    this.view.endProcess();
-		    this.cullWindow.mainView.image.resetSelections();
-		    this.cullWindow.mainView.beginProcess(UndoFlag_NoSwapFile);
-		    this.cullWindow.mainView.image.selectedChannel = 0;
-		    this.cullWindow.mainView.image.assign(image);
+		    view.endProcess();
 		    let autoStretch = new AutoStretch;
 		    try {
-			autoStretch.HardApply(this.cullWindow.mainView, false); //true, -2.80, 0.25);
+			autoStretch.HardApply(view, false); //true, -2.80, 0.25);
+			let bmap = this.reticle.draw(window, image.width/25);
+			console.noteln(format("bmap dimensions %d w and %d h", bmap.width, bmap.height));
+			this.cullWindow.mainView.image.resetSelections();
+			this.cullWindow.mainView.beginProcess(UndoFlag_NoSwapFile);
+			this.cullWindow.mainView.image.selectedChannel = 0;
+			this.cullWindow.mainView.image.blend(bmap);
 		    } catch (ex) {
 			console.writeln(ex.stack);
 			//		    console.writeln("Fatal error " + ex );
@@ -142,14 +156,12 @@ function PreviewWindow( parent )
 		    } finally {
 			this.cullWindow.mainView.endProcess();	
 		    }
-		    this.reticle.draw(this.cullWindow, image.width/25);
 
 		    let  p = this.parent.window.position;
 		    let cp = new Point;
 		    cp.x = p.x - this.cullWindow.width -5;
 		    cp.y = p.y;
 		    this.cullWindow.position = cp;
-		    console.hide();
 		    this.cullWindow.show();
 
 		    self.cullWindow.zoomToOptimalFit();
@@ -164,13 +176,18 @@ function PreviewWindow( parent )
 
     };
 
-    this.computeImageBitmap = (view) => {
-	if ( view.image ) {
+    this.computeImageBitmap = (window) => {
+	if ( window.mainView.image ) {
+	    let view = window.mainView
 	    let image = view.image;
+	    let origbmap = image.render();
 	    view.beginProcess(UndoFlag_NoSwapFile);
 	    image.colorSpace = ColorSpace_RGB;
+	    let scale = this.bitmapScale(image);
+	    
 	    image.resample(CULL_W, CULL_H, ResizeMode_AbsolutePixels, AbsoluteResizeMode_ForceWidth);
-	    view.endProcess();
+	    // origbmap.scaledTo(scale.w, scale.h);
+	    // image.blend(origbmap);
 
 	    let autoStretch = new AutoStretch;
 	    try {
@@ -182,8 +199,12 @@ function PreviewWindow( parent )
 	    } finally {
 
 	    }
-	    this.reticle.draw(this.cullWindow, image.width/25);
-	    return image.render();
+	    let bmap = this.reticle.draw(window, image.width/25);
+
+	    image.blend(bmap);
+	    view.endProcess();
+
+	    return bmap;
 	}
     };
 
@@ -207,8 +228,9 @@ function PreviewWindow( parent )
 		try {
 		    let window = ImageWindow.open(path)[0];
 		    let view = window.mainView;
-		    this.cache.set(path, this.computeImageBitmap(view));
+		    this.cache.set(path, this.computeImageBitmap(window));
 		    callback(i, filePaths.length);
+		    window.forceClose();
 		} catch (exc) {
 		    console.criticalln(exc);
 		}

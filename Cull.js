@@ -287,8 +287,6 @@ function CullDialog() {
 	if (total > 0) {
 	    pct = (count + 1)/total;
 	}
-	console.show();
-	console.noteln(format("In progress callback, count = %d, total = %d", count + 1, total));
 	this.progressBar.value = pct;
 	let newLabel = format("(%d/%d)", count + 1, total);
 	this.progressInfoLabel.text = newLabel;
@@ -366,7 +364,7 @@ function CullDialog() {
         }
     };
 
-    this.inputFilesButton.onClick = function() {
+    this.inputFilesButton.onClick = () =>  {
         var dialog = new OpenFileDialog();
 	dialog.multipleSelections = true;
 	dialog.filters = [[ "All Supported Formats", "xisf", "fits", "fit"]];
@@ -374,11 +372,12 @@ function CullDialog() {
             let files = dialog.fileNames;
 	    for (let i = 0; i < files.length; i++) {
 		fileList.push( {
-                    path: fileManager.dirname(files[i]),
+                    path: files[i],
                     name: files[i],
                     keep: false,
                     reject: false,
-		    reference: false
+		    reference: false,
+		    moved: false
 		})
 	    }
 	    
@@ -386,7 +385,7 @@ function CullDialog() {
             if (fileList.length > 0) {
 		this.computeBitmapGroupBox.show();
                 currentIndex = 0;
-                self.selectFile(0);
+                this.selectFile(0);
             }
 	}
     };
