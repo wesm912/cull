@@ -32,7 +32,6 @@
 //var dialog;
 var fileList = [];
 var currentIndex = 0;
-var previewBitmap = null;
 var playTimer = null;
 var isPlaying = false;
 var stretchMode = 0; // 0: Linear, 1: STF, 2: Histogram
@@ -488,9 +487,9 @@ function CullDialog() {
 	let fileObj = fileList[currentIndex];
 	console.show()
 	console.criticalln("deleting file at path " + fileObj.path);
-	console.criticalln("fileList length before delete: " + fileList.length);
-	let proceed = fileManager.deleteFiles([fileObj]);
-	if (proceed == StdButton_Ok) {
+	if (this.validateDelete() == true) {
+	    console.criticalln("fileList length before delete: " + fileList.length);
+	    fileManager.deleteFiles([fileObj]);
 	    fileObj.moved = true;
 	    this.updateFileList();
 	    console.criticalln("fileList length after delete: " + fileList.length);
@@ -885,9 +884,6 @@ function CullDialog() {
         if (playTimer) {
             playTimer.stop();
         }
-        if (previewBitmap) {
-            previewBitmap = null;
-        }
 	self.previewWindow.closeWindow();
     };
 }
@@ -900,11 +896,10 @@ function main() {
     console.show();
 
     var dialog = new CullDialog();
-    console.writeln(" Dialog focus style " + dialog.focusStyle);
     try {
 	dialog.execute();
     } catch (ex) {
-	console.writeln("Fatal: " + ex);
+	console.criticalln("Fatal: " + ex);
     }
 };
 
