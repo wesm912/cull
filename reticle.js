@@ -1,3 +1,6 @@
+#ifndef __RETICLE_JS
+#define __RETICLE_JS
+
 #include <pjsr/ColorSpace.jsh>
 function Reticle()
 {
@@ -9,7 +12,6 @@ function Reticle()
     this.image = null;
     
     this.draw = function(win, radius = 20) {
-	console.writeln("radius :" + radius);
 	if (win &&!win.isNull) {
 	    let view = win.mainView;
 	    if (view && view.image) {
@@ -52,4 +54,5 @@ function test()  {
 }
 #ifdef TEST_RETICLE
 test();
+#endif
 #endif

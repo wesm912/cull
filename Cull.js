@@ -382,7 +382,7 @@ function CullDialog() {
 	    }
 	    
             self.updateFileList();
-            if (fileList.length > 0) {
+            if (fileList.length > 1) {
 		this.computeBitmapGroupBox.show();
                 currentIndex = 0;
                 this.selectFile(0);

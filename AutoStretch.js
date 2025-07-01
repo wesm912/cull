@@ -1,3 +1,5 @@
+#ifndef __AUTOSTRETCH__JS
+#define __AUTOSTRETCH__JS
 // *********
 // This object has been copied and simplified from the AutoSTF script from Juan Conejero
 // *********
@@ -125,3 +127,5 @@ function AutoStretch()
       }
    }
 };
+
+#endif

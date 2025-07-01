@@ -87,7 +87,6 @@ function PreviewWindow( parent )
 
     this.SetImage = function( path )
     {
-	console.noteln("SetImage passed path " + path);
 	if (this.imageWindow && !this.imageWindow.isNull) {
 	    this.imageWindow.forceClose();
 	}
@@ -105,7 +104,7 @@ function PreviewWindow( parent )
 		this.showImage(window);
 		let scale = this.bitmapScale(this.image);
 		this.cache.set(path,
-			       this.cullWindow.mainView.image.render());			      //       this.cullWindow.mainView.image.render().scaledTo(scale.w/2, scale.h/2));
+			       this.cullWindow.mainView.image.render());			     
 	    }
 	}
    };
@@ -184,7 +183,6 @@ function PreviewWindow( parent )
 	    view.beginProcess(UndoFlag_NoSwapFile);
 	    image.colorSpace = ColorSpace_RGB;
 	    let scale = this.bitmapScale(image);
-	    
 	    image.resample(CULL_W, CULL_H, ResizeMode_AbsolutePixels, AbsoluteResizeMode_ForceWidth);
 	    // origbmap.scaledTo(scale.w, scale.h);
 	    // image.blend(origbmap);
@@ -218,6 +216,7 @@ function PreviewWindow( parent )
 	console.abortEnabled = true;
 	console.show();
 
+	let start = new ElapsedTime();
 	for (let i = 0; i < filePaths.length; i++) {
 	    if (this.cancelPreCompute == true) {
 		this.cancelPreCompute = false;
@@ -236,6 +235,7 @@ function PreviewWindow( parent )
 		}
 	    }
 	}
+	console.noteln(format("precomputing cache for %d files took %f sec", total, start.value));
     };
 
 }
