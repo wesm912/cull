@@ -41,7 +41,6 @@ var midtonesBalance = 0.5;
 
 // File management class
 function FileManager() {
-    this.inputDirectory = "";
     this.keepDirectory = "";
     this.rejectDirectory = "";
 
@@ -118,10 +117,19 @@ function FileManager() {
 function CullDialog() {
     this.__base__ = Dialog;
     this.__base__();
+    const settingsPrefix = "CULLJS/";
+    this.dontNagOnDelete = false;
 
-    var mode = "bulk";
     var fileManager = new FileManager();
-    //    var imagePreview = new ImagePreview();
+    let noNagOnDelete = Settings.read(settingsPrefix + "noNagOnDelete", DataType_Boolean);
+    if (noNagOnDelete != null) this.dontNagOnDelete = noNagOnDelete;
+
+    let keepDir = Settings.read(settingsPrefix + "keepDirectory", DataType_String);
+    if (keepDir != null) fileManager.keepDirectory = keepDir.replace(settingsPrefix, "");
+
+    let cullDir = Settings.read(settingsPrefix + "rejectDirectory", DataType_String);
+    if (cullDir != null) fileManager.rejectDirectory = rejectDir.replace(settingsPrefix,"");
+
     this.previewWindow = new PreviewWindow(this)
     var self = this;
     this.focusStyle = 0x02;//keypress events
@@ -200,7 +208,9 @@ function CullDialog() {
     this.settingsButton.text = "Settings ...";
     this.settingsButton.icon = this.scaledResource(":/icons/gear.png");
     this.settingsButton.setFixedHeight(buttonFixedHeight);
-//    this.settingsButton.icon = this.settingsButton.icon.scaledTo(d);
+    this.settingsButton.onClick = () => {
+	this.tabBox.currentPageIndex = 1;
+    }
 
 
     this.trashButton = new PushButton(this)
@@ -402,8 +412,8 @@ function CullDialog() {
 	this.previewWindow.cache.clear();
     }
 
-    this.validateKeepDirectory =function() {
-        if (!fileManager.keepDirectory) {
+    this.validateKeepDirectory = (force = false) => {
+        if (!fileManager.keepDirectory || force ) {
 	    let msg = new MessageBox("Please choose a directory to hold files to keep",
 				     "Choose Directory", StdIcon_NoIcon, StdButton_Ok,
 				     StdButton_Cancel, 0, 1);
@@ -417,8 +427,8 @@ function CullDialog() {
 	return true;
     }
 
-    this.validateRejectDirectory = function() {
-        if (!fileManager.rejectDirectory) {
+    this.validateRejectDirectory = (force = false) => {
+        if (!fileManager.rejectDirectory || force ) {
 	    let msg = new MessageBox("Please choose a directory to hold files to delete",
 				     "Choose Directory", StdIcon_NoIcon, StdButton_Ok,
 				     StdButton_Cancel, 0, 1);
@@ -432,17 +442,18 @@ function CullDialog() {
 	return true;
     }
 
-    var deleteOk = false;
     this.validateDelete = function() {
-	if ( !deleteOk ) {
+	if ( this.dontNagOnDelete == false ) {
 	    let msg = new MessageBox("Do you really want to delete this file?",
 				     "DeleteFile", StdIcon_Question, StdButton_Ok,
 				     StdButton_Cancel, 0, 1);
 	    if (msg.execute() == StdButton_Ok)
-		deleteOk = true
+		return true;
+	    return false;
 	}
-	return deleteOk;
+	return true;;
     }
+
     
     this.moveKeepButton.onClick = () => {
 	if (this.validateKeepDirectory() == false) return;
@@ -820,26 +831,57 @@ function CullDialog() {
     this.chooseKeepDirectoryButton.text = "Keep directory";
     this.chooseKeepDirectoryLabel= new Label(this);
     this.chooseKeepDirectoryLabel.text = "Set up a directory to hold files to keep.<br/>";
-    this.chooseKeepDirectoryLabel.text += "Current keep directory is " +
-	(fileManager.keepDirectory.length > 0  ? fileManager.keepDirectory: "undefined");
+    this.chooseKeepDirectoryLabel.text += "Current keep directory is &mdash;" +
+	(fileManager.keepDirectory.length > 0  ? fileManager.keepDirectory: " undefined");
     this.chooseKeepDirectorySizer = new HorizontalSizer(this);
-    this.chooseKeepDirectorySizer.add(this.chooseKeepDirectoryLabel, 80);
-    this.chooseKeepDirectorySizer.add(this.chooseKeepDirectoryButton, 20);
+    this.chooseKeepDirectorySizer.add(this.chooseKeepDirectoryButton);
+    this.chooseKeepDirectorySizer.insertSpacing(1, 50);
+    this.chooseKeepDirectorySizer.add(this.chooseKeepDirectoryLabel);
+    this.chooseKeepDirectoryLabel.minWidth = 300;
     this.chooseKeepDirectoryLabel.wordWrapping = true;
     this.chooseKeepDirectoryLabel.useRichText = true;
-
+    this.chooseKeepDirectorySizer.addStretch();
+    this.chooseKeepDirectoryButton.onClick = () => {
+	if (this.validateKeepDirectory(true)) {
+	    let text = this.chooseKeepDirectoryLabel.text;
+	    text = text.replace(/&mdash(.*)/, fileManager.keepDirectory);
+	    this.chooseKeepDirectoryLabel.text = text;
+	    processEvents();
+	    Settings.write(settingsPrefix + "keepDirectory", DataType_String,
+			   fileManager.keepDirectory);
+	}
+    }
 
     this.chooseRejectDirectoryButton = new PushButton(this);
     this.chooseRejectDirectoryButton.text = "Cull directory";
     this.chooseRejectDirectoryLabel= new Label(this);
     this.chooseRejectDirectoryLabel.text = "Set up a directory to hold files to cull.<br/>";
-    this.chooseRejectDirectoryLabel.text += "Current keep directory is " +
-	(fileManager.keepDirectory.length > 0  ? fileManager.rejectDirectory: "undefined");
+    this.chooseRejectDirectoryLabel.text += "Current cull directory is " +
+	(fileManager.rejectDirectory.length > 0  ? fileManager.rejectDirectory: "undefined");
     this.chooseRejectDirectorySizer = new HorizontalSizer(this);
-    this.chooseRejectDirectorySizer.add(this.chooseRejectDirectoryLabel, 80);
-    this.chooseRejectDirectorySizer.add(this.chooseRejectDirectoryButton, 20);
+    this.chooseRejectDirectorySizer.add(this.chooseRejectDirectoryButton);
+    this.chooseRejectDirectorySizer.insertSpacing(1, 50);
+    this.chooseRejectDirectorySizer.add(this.chooseRejectDirectoryLabel);
     this.chooseRejectDirectoryLabel.wordWrapping = true;
     this.chooseRejectDirectoryLabel.useRichText = true;
+    this.chooseRejectDirectoryLabel.minWidth = 300;
+    this.chooseRejectDirectorySizer.addStretch();
+    this.chooseRejectDirectoryButton.onClick = () => {
+	if(this.validateRejectDirectory(true)) {
+	    let text = this.chooseRejectDirectoryLabel.text;
+	    text = text.replace(/&mdash(.*)/, + fileManager.rejectDirectory);
+	    this.chooseRejectDirectoryLabel.text = text;
+	    processEvents();
+	    Settings.write(settingsPrefix + "rejectDirectory",
+			   DataType_String, fileManager.rejectDirectory);
+	}
+    }
+
+    let buttonWidth = Math.max(this.chooseKeepDirectoryButton.width,
+			       this.chooseRejectDirectoryButton.width);
+    this.chooseKeepDirectoryButton.minWidth = buttonWidth;
+    this.chooseRejectDirectoryButton.minWidth = buttonWidth;
+    
 
     this.directorySettingsSizer = new VerticalSizer(this)
     this.directorySettingsSizer.add(this.chooseKeepDirectorySizer);
@@ -852,12 +894,28 @@ function CullDialog() {
     this.directorySettingsGroupBox.title = "Directory Settings";
     this.directorySettingsGroupBox.sizer = this.directorySettingsSizer;
 
+    this.dontNagDeleteCheckBox = new CheckBox(this);
+    this.dontNagDeleteCheckBox.text = "No prompt on delete?";
+    this.dontNagDeleteCheckBox.checked = this.dontNagOnDelete;
+    this.dontNagDeleteCheckBox.onCheck = () => {
+	this.dontNagOnDelete = this.dontNagDeleteCheckBox.checked;
+	Settings.write(settingsPrefix + "noNagOnDelete",DataType_Boolean, this.dontNagOnDelete);
+    }
+    this.dontNagOnDeleteLabel = new Label(this);
+    this.dontNagOnDeleteLabel.useRichText = true;
+    this.dontNagOnDeleteLabel.wordWrapping = true;
+    this.dontNagOnDeleteLabel.text = "Suppress warnings from the Really Delete button<br/>" +
+	"Caution: deleted files may be unrecoverable"
+    this.dontNagSizer = new HorizontalSizer(this);
+    this.dontNagSizer.add(this.dontNagDeleteCheckBox, 25);
+    this.dontNagSizer.add(this.dontNagOnDeleteLabel, 75);
     
-  this.settingsPage = new Control(this);
+    this.settingsPage = new Control(this);
     this.settingsPage.sizer = new VerticalSizer(this);
     this.settingsPage.sizer.margin = 6;
     this.settingsPage.sizer.spacing = 6;
     this.settingsPage.sizer.add(this.directorySettingsGroupBox);
+    this.settingsPage.sizer.add(this.dontNagSizer);
     this.settingsPage.sizer.addStretch();
 
 
