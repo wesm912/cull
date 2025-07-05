@@ -142,7 +142,7 @@ function CullDialog() {
     this.filesTreeBox.adjustColumnWidthToContents(0);
     this.filesTreeBox.setHeaderText(1, "Filename");
     this.filesTreeBox.alternateRowColor = true;
-    this.filesTreeBox.multipleSelection = false;
+    this.filesTreeBox.multipleSelection = true;
 
 
     // Directory controls
@@ -597,7 +597,7 @@ function CullDialog() {
     // 	}
     // };
 
-    this.onKeyPress = function(key, modifiers) {
+    this.onKeyPress = (key, modifiers) => {
 	let wantsKey = false;
 	console.show();
 	console.writeln("Got key " + key + ", modifiers " + modifiers);
@@ -623,52 +623,53 @@ function CullDialog() {
         case Key_K: // 'K' key
 	    if (self.validateKeepDirectory() == StdButton_Ok) {
 		console.writeln("keypress K");
-		if (fileList.length > 0) {
-		    if (mode == "bulk") {
-			fileList[currentIndex].keep = !fileList[currentIndex].keep;
-			fileList[currentIndex].reject = false;
-			self.nextFile()
-		    } else {
-			let file = fileList[currentIndex];
-			fileList[currentIndex].moved = true;
-			fileList[currentIndex].keep = true;
-			fileManager.moveFiles([file], fileManager.keepDirectory, "keep")
-		    }
-                    self.updateFileList();
+		let selectedNodes = self.filesTreeBox.selectedNodes;
+		let node = null, txt = null;
+		selectedNodes.map((n) => n.text(1));
+		for (let i = 0; i < selectedNodes.length; i++) {
+		    node = selectedNodes[i];
+		    let idx = this.filesTreeBox.childIndex(node);
+		    let obj = fileList[idx];
+		    obj.keep = !obj.keep;
+		    obj.reject = false;
+		    obj.moved = false;
 		}
+		self.updateFileList();
 	    }
-	    wantsKey = true;
             break;
         case Key_X: // 'X' key
 	    console.writeln("keypress X");
 	    if (self.validateRejectDirectory() == StdButton_Ok) {
-		if (fileList.length > 0) {
-		    if (mode == "bulk") {
-			fileList[currentIndex].reject = !fileList[currentIndex].reject;
-			fileList[currentIndex].keep = false;
-			self.nextFile()
-			self.updateFileList();
-		    } else {
-			let file = fileList[currentIndex];
-			fileList[currentIndex].moved = true;
-			fileList[currentIndex].keep = false;
-			fileManager.moveFiles([file], fileManager.rejectDirectory, "reject");
-		    }
-                    self.updateFileList();
-		}		
-		wantsKey = true;
+		let selectedNodes = self.filesTreeBox.selectedNodes;
+		let node = null, txt = null;
+		selectedNodes.map((n) => n.text(1));
+		for (let i = 0; i < selectedNodes.length; i++) {
+		    node = selectedNodes[i];
+		    let idx = this.filesTreeBox.childIndex(node);
+		    let obj = fileList[idx];
+		    obj.reject = !obj.reject;
+		    obj.keep = false;
+		    obj.moved = false;
+		}
+		self.updateFileList();
 	    }
             break;
 	case Key_Backspace:
 	case Key_Delete:
-	    if (mode != "bulk") {
-		if (self.validateDelete() == true) {
-		    let fileObj = fileList[currentIndex];
-		    fileObj.moved = true;
-		    fileManager.deleteFiles([fileObj]);
-		    self.updateFileList();
+	    if (self.validateDelete() == true) {
+		let selectedNodes = self.filesTreeBox.selectedNodes;
+		let nodesToDelete = [];
+		for (let i = 0; i < selectedNodes.length; i++) {
+		    node = selectedNodes[i];
+		    let idx = this.filesTreeBox.childIndex(node);
+		    let obj = fileList[idx];
+		    obj.reject = true;
+		    obj.keep = false;
+		    obj.moved = true;
+		    nodesToDelete.push(obj);
 		}
-		wantsKey = true;
+		fileManager.deleteFiles(nodesToDelete);
+		self.updateFileList();
 	    }
 	    break;
 	default:
