@@ -517,28 +517,40 @@ function CullDialog() {
     this.trashButton.onClick = () => {
 	if (fileList.length == 0)
 	    return;
-	let fileObj = fileList[currentIndex];
 	console.show()
-	console.criticalln("deleting file at path " + fileObj.path);
 	if (this.validateDelete() == true) {
-	    console.criticalln("fileList length before delete: " + fileList.length);
-	    fileManager.deleteFiles([fileObj]);
-	    fileObj.moved = true;
+	    let nodes = this.filesTreeBox.selectedNodes;
+	    let len  = this.filesTreeBox.selectedNodes.length;
+	    console.criticalln(format("deleting %d files", len));
+	    let fileListFiles = new Array();
+	    let idx, fileObj;
+	    for (let i = 0; i < len; i++) {
+		idx = this.filesTreeBox.childIndex(nodes[i]);
+		fileObj = fileList[idx];
+		fileObj.moved = true;
+		fileObj.keep = false;
+		fileObj.reject = true;
+		fileListFiles.push(fileList[idx]);
+	    }
+	    console.noteln("fileList length before delete: " + fileList.length);
+	    fileManager.deleteFiles(fileListFiles);
 	    this.updateFileList();
-	    console.criticalln("fileList length after delete: " + fileList.length);
+	    processEvents();
+	    console.noteln("fileList length after delete: " + fileList.length);
 	}
     };
 
-    this.nextFile = () =>
+    this.nextIndex = (idx) =>
     {
 	if (fileList.length < 1)
-	    return
-        if (currentIndex < fileList.length - 1) {
-            currentIndex++;
+	    return idx;
+	let i = idx;
+        if (idx < fileList.length - 1) {
+            i++;
         } else {
-	    currentIndex= 0;
+	    i= 0;
 	}
-        self.selectFile(currentIndex);
+        return i;
     };
     
     this.prevButton.onClick = function() {
@@ -613,9 +625,6 @@ function CullDialog() {
     // };
 
     this.onKeyPress = (key, modifiers) => {
-	let wantsKey = false;
-	console.show();
-	console.writeln("Got key " + key + ", modifiers " + modifiers);
         switch (key) {
         case Key_Up:
             if (currentIndex > 0) {
@@ -624,7 +633,6 @@ function CullDialog() {
 		currentIndex = fileList.length -1;
 	    }
             self.selectFile(currentIndex);
-	    wantsKey = true;
             break;
         case Key_Down:
             if (currentIndex < fileList.length - 1) {
@@ -633,51 +641,58 @@ function CullDialog() {
 		currentIndex = 0;
 	    }
             self.selectFile(currentIndex);
-	    wantsKey = true;
             break;
         case Key_K: // 'K' key
 	    if (self.validateKeepDirectory() == StdButton_Ok) {
-		console.writeln("keypress K");
-		let selectedNodes = self.filesTreeBox.selectedNodes;
-		let node = null, txt = null;
-		selectedNodes.map((n) => n.text(1));
+		let selectedNodes = self.filesTreeBox.selectedNodes,
+		    len = self.filesTreeBox.selectedNodes.length;
+		let node, idx, obj;
 		for (let i = 0; i < selectedNodes.length; i++) {
 		    node = selectedNodes[i];
-		    let idx = this.filesTreeBox.childIndex(node);
-		    let obj = fileList[idx];
+		    idx = this.filesTreeBox.childIndex(node);
+		    obj = fileList[idx];
 		    obj.keep = !obj.keep;
 		    obj.reject = false;
 		    obj.moved = false;
+		}
+		if (len > 0) {
+		    currentIndex = this.nextIndex(idx);
 		}
 		self.updateFileList();
 	    }
             break;
         case Key_X: // 'X' key
-	    console.writeln("keypress X");
 	    if (self.validateRejectDirectory() == StdButton_Ok) {
-		let selectedNodes = self.filesTreeBox.selectedNodes;
-		let node = null, txt = null;
-		selectedNodes.map((n) => n.text(1));
+		let selectedNodes = self.filesTreeBox.selectedNodes,
+		    len = self.filesTreeBox.selectedNodes.length;
+		let node, idx, obj;
 		for (let i = 0; i < selectedNodes.length; i++) {
 		    node = selectedNodes[i];
-		    let idx = this.filesTreeBox.childIndex(node);
-		    let obj = fileList[idx];
+		    idx = this.filesTreeBox.childIndex(node);
+		    obj = fileList[idx];
 		    obj.reject = !obj.reject;
 		    obj.keep = false;
 		    obj.moved = false;
+		}
+		if (len > 0) {
+		    currentIndex = this.nextIndex(idx);
 		}
 		self.updateFileList();
 	    }
             break;
 	case Key_Backspace:
 	case Key_Delete:
+	    console.noteln("Got backspace or delete key");
 	    if (self.validateDelete() == true) {
+		console.noteln("Keypress validateDelete returned true");
 		let selectedNodes = self.filesTreeBox.selectedNodes;
 		let nodesToDelete = [];
+		console.noteln( format ("%d nodes to delete", self.filesTreeBox.selectedNodes.length));
 		for (let i = 0; i < selectedNodes.length; i++) {
 		    node = selectedNodes[i];
 		    let idx = this.filesTreeBox.childIndex(node);
 		    let obj = fileList[idx];
+		    console.warningln(format("Deleting node %s at index %d", obj.name, idx));
 		    obj.reject = true;
 		    obj.keep = false;
 		    obj.moved = true;
@@ -691,7 +706,6 @@ function CullDialog() {
 	    console.writeln("got keycode " + key);
 	    break;
         }
-	return wantsKey;
     };
 
     this.filesTreeBox.onKeyPress = this.onKeyPress;
