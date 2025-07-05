@@ -164,6 +164,13 @@ function CullDialog() {
     this.inputFilesButton.icon = inputFilesBmap;//this.scaledResource(":/icons/file-list.png")
     this.inputFilesButton.setFixedHeight(buttonFixedHeight);
 
+    this.clearSelectionButton = new PushButton(this);
+    this.clearSelectionButton.text = "Clear Selection";
+    // let clearAllBmap = new Bitmap(":/icons/clear-inverted.png");
+    // clearAllBmap = clearAllBmap.scaledTo(d>>1);
+    // this.clearAllFilesButton.icon = clearAllBmap;
+    this.clearSelectionButton.setFixedHeight(buttonFixedHeight);
+
     this.clearAllFilesButton = new PushButton(this);
     this.clearAllFilesButton.text = "Clear All";
     let clearAllBmap = new Bitmap(":/icons/clear-inverted.png");
@@ -190,19 +197,19 @@ function CullDialog() {
 
     // Action keypad buttons
     let dir = fileManager.dirname(#__FILE__);
-    this.actionButtonSizer = new HorizontalSizer;
+//    this.actionButtonSizer = new HorizontalSizer;
     
-    this.keepButton = new PushButton(this)
-    this.keepButton.text = "Keep";
-    let keepIcon = new Bitmap(dir + "/icons/icons8-k-key-50.png");
-    keepIcon = keepIcon.scaledTo(d);
-    this.keepButton.icon = keepIcon
+    // this.keepButton = new PushButton(this)
+    // this.keepButton.text = "Keep";
+    // let keepIcon = new Bitmap(dir + "/icons/icons8-k-key-50.png");
+    // keepIcon = keepIcon.scaledTo(d);
+    // this.keepButton.icon = keepIcon
 
-    this.cullButton = new PushButton(this)
-    this.cullButton.text = "Cull";
-    let cullIcon = new Bitmap(dir + "/icons/icons8-x-key-50.png");
-    cullIcon = cullIcon.scaledTo(d);
-    this.cullButton.icon = cullIcon;
+    // this.cullButton = new PushButton(this)
+    // this.cullButton.text = "Cull";
+    // let cullIcon = new Bitmap(dir + "/icons/icons8-x-key-50.png");
+    // cullIcon = cullIcon.scaledTo(d);
+    // this.cullButton.icon = cullIcon;
 
     this.settingsButton = new PushButton(this);
     this.settingsButton.text = "Settings ...";
@@ -255,7 +262,7 @@ function CullDialog() {
     // this.stretchComboBox.addItem("Histogram");
     // this.stretchComboBox.currentItem = 0;
 
-    // this.shadowsSlider = new NumericControl(this);
+
     // this.shadowsSlider.label.text = "Shadows:";
     // this.shadowsSlider.setRange(0, 1);
     // this.shadowsSlider.setValue(0);
@@ -406,6 +413,14 @@ function CullDialog() {
 	}
     };
 
+    this.clearSelectionButton.onClick = () => {
+	let nodes = this.filesTreeBox.selectedNodes;
+	let len = this.filesTreeBox.selectedNodes.length;
+	for (let i = 0; i < len; i++) {
+	    nodes[i].selected = false;
+	}
+    };
+	    
     this.clearAllFilesButton.onClick = () => {
 	fileList = [];
 	this.updateFileList();
@@ -464,17 +479,17 @@ function CullDialog() {
         self.updateFileList();
     };
 
-    this.keepButton.onClick = () => {
-	if (this.validateKeepDirectory() == false) return;
+    // this.keepButton.onClick = () => {
+    // 	if (this.validateKeepDirectory() == false) return;
 
- 	let file = fileList[currentIndex];
-	file.keep = true;
-	console.show();
-	console.writeln("Chose file " + file.path + ", " + file.name + ", " + file.keep);
-	console.writeln("Keep directory is " + fileManager.keepDirectory);
-	fileManager.moveFiles([file], fileManager.keepDirectory, "keep");
-	this.updateFileList();
-    }
+    // 	let file = fileList[currentIndex];
+    // 	file.keep = true;
+    // 	console.show();
+    // 	console.writeln("Chose file " + file.path + ", " + file.name + ", " + file.keep);
+    // 	console.writeln("Keep directory is " + fileManager.keepDirectory);
+    // 	fileManager.moveFiles([file], fileManager.keepDirectory, "keep");
+    // 	this.updateFileList();
+    // }
 
     this.moveRejectButton.onClick = ( ) => {
 	if (this.validateRejectDirectory() == false) return;
@@ -486,18 +501,18 @@ function CullDialog() {
         self.updateFileList();
     };
 
-    this.cullButton.onClick = ( ) => {
-	if (this.validateRejectDirectory() == false) return;
+    // this.cullButton.onClick = ( ) => {
+    // 	if (this.validateRejectDirectory() == false) return;
 
- 	let file = fileList[currentIndex];
-	file.keep = false;
-	file.reject = true;
-	console.show();
-	console.writeln("Chose file " + file.path + ", " + file.name + ", " + file.keep);
-	console.writeln("Rejectdirectory is " + fileManager.rejectDirectory);
-	fileManager.moveFiles([file], fileManager.rejectDirectory, "reject");
-	this.updateFileList();
-    };
+    // 	let file = fileList[currentIndex];
+    // 	file.keep = false;
+    // 	file.reject = true;
+    // 	console.show();
+    // 	console.writeln("Chose file " + file.path + ", " + file.name + ", " + file.keep);
+    // 	console.writeln("Rejectdirectory is " + fileManager.rejectDirectory);
+    // 	fileManager.moveFiles([file], fileManager.rejectDirectory, "reject");
+    // 	this.updateFileList();
+    // };
 
     this.trashButton.onClick = () => {
 	if (fileList.length == 0)
@@ -793,6 +808,7 @@ function CullDialog() {
     this.cullButtonsSizer.spacing = 6;
     this.cullButtonsSizer.add(this.inputDirButton);
     this.cullButtonsSizer.add(this.inputFilesButton);
+    this.cullButtonsSizer.add(this.clearSelectionButton);
     this.cullButtonsSizer.add(this.clearAllFilesButton);
     this.cullButtonsSizer.add(this.moveKeepButton);
     this.cullButtonsSizer.add(this.moveRejectButton);
@@ -809,8 +825,8 @@ function CullDialog() {
     this.actionButtonSizer = new VerticalSizer();
     this.actionButtonSizer.margin = 4;
     this.actionButtonSizer.spacing = 6;
-    this.actionButtonSizer.add(this.keepButton);
-    this.actionButtonSizer.add(this.cullButton);
+//    this.actionButtonSizer.add(this.keepButton);
+//    this.actionButtonSizer.add(this.cullButton);
 //    this.actionButtonSizer.add(this.trashButton);
     this.actionButtonSizer.addStretch();
 //    this.actionButtonControl.sizer = this.actionButtonSizer;
