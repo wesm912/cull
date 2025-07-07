@@ -235,6 +235,7 @@ function PreviewWindow( parent )
 		}
 	    }
 	}
+	gc();
 	console.noteln(format("precomputing cache for %d files took %f sec", total, start.value));
     };
 

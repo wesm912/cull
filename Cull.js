@@ -44,7 +44,7 @@ function FileManager() {
     this.keepDirectory = "";
     this.rejectDirectory = "";
 
-      var files = [];
+      this.files = [];
       var extensions = [".fits", ".xisf", ".fit", ".fts"];
 
     this.dirname = function(filePath) {
@@ -55,6 +55,10 @@ function FileManager() {
         }
 	return tmp;
     }
+
+    this.clear = () => {
+	this.files = [];
+    };
     
     this.findFiles = function(directory, recurse ) {
          let base = File.fullPath(directory);
@@ -69,7 +73,7 @@ function FileManager() {
                if (slash > 0) {
                   tmp = tmp.slice(slash + 1);
                }
-		files.push({
+		this.files.push({
                     path: found[j],
                     name: tmp,
                     keep: false,
@@ -79,8 +83,8 @@ function FileManager() {
 		})
             }
          };
-      fileList = files;
-      return files;
+      fileList = this.files;
+      return this.files;
     };
 
     this.moveFiles = function(files, targetDirectory, type) {
@@ -91,7 +95,8 @@ function FileManager() {
             if ((type === "keep" && files[i].keep) || (type === "reject" && files[i].reject)) {
                 try {
                     var targetPath = targetDirectory + "/" + files[i].name;
-                    File.move(files[i].path, targetPath);
+                    File.moveFile(targetPath, files[i].path);
+//                    File.copyFile(targetPath, files[i].path);
 		    files[i].moved = true;
                     moved++;
                 } catch (error) {
@@ -128,7 +133,7 @@ function CullDialog() {
     if (keepDir != null) fileManager.keepDirectory = keepDir.replace(settingsPrefix, "");
 
     let cullDir = Settings.read(settingsPrefix + "rejectDirectory", DataType_String);
-    if (cullDir != null) fileManager.rejectDirectory = rejectDir.replace(settingsPrefix,"");
+    if (cullDir != null) fileManager.rejectDirectory = cullDir.replace(settingsPrefix,"");
 
     this.previewWindow = new PreviewWindow(this)
     var self = this;
@@ -376,7 +381,9 @@ function CullDialog() {
         var dialog = new GetDirectoryDialog();
         if (dialog.execute()) {
             fileManager.inputDirectory = dialog.directory;
+	    console.noteln("Loading directory " + dialog.directory);
             fileList = fileManager.findFiles(fileManager.inputDirectory, true);
+	    console.noteln(format( "Found %d files ", fileList.length));
             this.updateFileList();
             if (fileList.length > 0) {
 		this.computeBitmapGroupBox.show();
@@ -423,7 +430,9 @@ function CullDialog() {
 	    
     this.clearAllFilesButton.onClick = () => {
 	fileList = [];
+	fileManager.clear();
 	this.updateFileList();
+	console.noteln("clear all files list length = " + fileList.length);
 	this.previewWindow.cache.clear();
     }
 
@@ -546,11 +555,10 @@ function CullDialog() {
 	    return idx;
 	let i = idx;
         if (idx < fileList.length - 1) {
-            i++;
+            return idx + 1;
         } else {
-	    i= 0;
+	    return 0;
 	}
-        return i;
     };
     
     this.prevButton.onClick = function() {
@@ -605,11 +613,24 @@ function CullDialog() {
     }
 
     this.filesTreeBox.onNodeSelectionUpdated = function() {
+	console.warningln("onNodeSelectionUpdated: this is " + this);
         if (self.filesTreeBox.selectedNodes.length > 0) {
+	    console.noteln(format("Before selection  %d selected nodes",
+				  self.filesTreeBox.selectedNodes.length));
             var node = self.filesTreeBox.selectedNodes[0];
+	    console.noteln(format("Before selection updated: currentIndex = %d", currentIndex));
             currentIndex = self.filesTreeBox.childIndex(node);
+	    console.noteln(format("After selection updated: currentIndex = %d", currentIndex));
 	    //            self.updatePreview();
         }
+    };
+
+    this.filesTreeBox.onCurrentNodeUpdated = function() {
+	console.warningln("onCurrentNodeUpdated: this is " + this);
+	let node = self.filesTreeBox.currentNode;
+	console.noteln(format("onCurrentNodeUpdated: currentIndex = %d", currentIndex));
+        let idx = self.filesTreeBox.childIndex(node);
+	console.noteln(format("onCurrentNodeUpdated: idx = %d", idx));
     };
 
     // this.filesTreeBox.onKeyPress = function() {
@@ -618,13 +639,9 @@ function CullDialog() {
     
     // Keyboard handling
 
-    // this.keepButton.onKeyPress = (key, modifiers) =>
-    // {
-    // 	if (key == Key_K ) {
-    // 	}
-    // };
-
     this.onKeyPress = (key, modifiers) => {
+	console.noteln(format("Got key %d, modifiers %d", key, modifiers));
+	console.noteln(format("Incoming currentIndex is %d for keypress", currentIndex));
         switch (key) {
         case Key_Up:
             if (currentIndex > 0) {
@@ -633,6 +650,7 @@ function CullDialog() {
 		currentIndex = fileList.length -1;
 	    }
             self.selectFile(currentIndex);
+	    return true;
             break;
         case Key_Down:
             if (currentIndex < fileList.length - 1) {
@@ -641,6 +659,7 @@ function CullDialog() {
 		currentIndex = 0;
 	    }
             self.selectFile(currentIndex);
+	    return true;
             break;
         case Key_K: // 'K' key
 	    if (self.validateKeepDirectory() == StdButton_Ok) {
@@ -712,6 +731,8 @@ function CullDialog() {
 
     // Helper methods
     this.updateFileList = function() {
+	console.noteln(format("Incoming updateFileList fileList.length = %d, currentIndex = %d",
+			      fileList.length, currentIndex));
         self.filesTreeBox.clear();
 	fileList = fileList.filter( (f) => f.moved === false );
 
@@ -730,9 +751,14 @@ function CullDialog() {
     };
 
     this.selectFile = function(index) {
+	console.noteln(format("Incoming selectFile, currentIndex = %d, index = %d",
+			      currentIndex, index));
         if (index >= 0 && index < fileList.length) {
 	    let currentNode = self.filesTreeBox.currentNode;
+	    console.warningln(format("selectFile: currentNode is " + currentNode));
 	    if (currentNode) {
+		console.warningln(format("selectFile thinks current index should be %d",
+				     self.filesTreeBox.childIndex(currentNode)));
 		currentNode.selected = false;
 	    }
             currentIndex = index;
@@ -900,7 +926,7 @@ function CullDialog() {
     this.chooseRejectDirectoryButton.onClick = () => {
 	if(this.validateRejectDirectory(true)) {
 	    let text = this.chooseRejectDirectoryLabel.text;
-	    text = text.replace(/&mdash(.*)/, + fileManager.rejectDirectory);
+	    text = text.replace(/&mdash(.*)/, fileManager.rejectDirectory);
 	    this.chooseRejectDirectoryLabel.text = text;
 	    processEvents();
 	    Settings.write(settingsPrefix + "rejectDirectory",
