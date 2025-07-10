@@ -1,12 +1,12 @@
 /*
  * Advanced Blink Replacement Script for PixInsight
- * A comprehensive file management and preview tool for astronomical images
+ *
  */
 
 #feature-id    Utilities > Advanced Blink Replacement
 
 #define TITLE "Cull Images"
-#define VERSION "1.0"
+#define VERSION "0.5 beta"
 #include <pjsr/NumericControl.jsh>
 #include <pjsr/BRQuadTree.jsh>
 #include <pjsr/ColorComboBox.jsh>
@@ -30,22 +30,13 @@
 
 // Global variables
 //var dialog;
-var fileList = [];
-var currentIndex = 0;
-var playTimer = null;
-var isPlaying = false;
-var stretchMode = 0; // 0: Linear, 1: STF, 2: Histogram
-var shadowsClipping = 0.0;
-var highlightsClipping = 1.0;
-var midtonesBalance = 0.5;
 
 // File management class
 function FileManager() {
     this.keepDirectory = "";
     this.rejectDirectory = "";
-
-      this.files = [];
-      var extensions = [".fits", ".xisf", ".fit", ".fts"];
+    this.files = [];
+    var extensions = [".fits", ".xisf", ".fit", ".fts"];
 
     this.dirname = function(filePath) {
 	let tmp =  filePath;
@@ -55,6 +46,25 @@ function FileManager() {
         }
 	return tmp;
     }
+
+    // Extracted from BPP-helper.js
+    this.existingAndUniqueFileName = function( outputFolder, fileName )
+    {
+	if ( !File.directoryExists( outputFolder ) )
+            File.createDirectory( outputFolder );
+	let filePath = outputFolder + "/" + fileName;
+	let uniqueFilePath;
+	let j = 0;
+	let postFix = "";
+	do
+	{
+            uniqueFilePath = File.appendToName( filePath, postFix );
+            j++;
+            postFix = "_(" + j + ")";
+	}
+	while ( File.exists( uniqueFilePath ) );
+	return uniqueFilePath;
+    };
 
     this.clear = () => {
 	this.files = [];
@@ -98,10 +108,10 @@ function FileManager() {
 	console.writeln("target directory " + targetDirectory);
 	fileProgressDialog.show();
         for (var i = 0; i < files.length; i++) {
-	    console.writeln(files[i].path);
             if ((type === "keep" && files[i].keep) || (type === "reject" && files[i].reject)) {
                 try {
-                    var targetPath = targetDirectory + "/" + files[i].name;
+		    var targetPath = this.existingAndUniqueFileName(targetDirectory, files[i].name);
+		    console.noteln(format("Got unique filename %s", targetPath));
                     File.moveFile(targetPath, files[i].path);
 //                    File.copyFile(targetPath, files[i].path);
 		    files[i].moved = true;
@@ -132,7 +142,11 @@ function CullDialog() {
     this.__base__();
     const settingsPrefix = "CULLJS/";
     this.dontNagOnDelete = false;
-
+    this.playTimer = null;
+    var isPlaying = false;
+    var fileList = [];
+    var currentIndex = 0;
+    
     var fileManager = new FileManager();
     let noNagOnDelete = Settings.read(settingsPrefix + "noNagOnDelete", DataType_Boolean);
     if (noNagOnDelete != null) this.dontNagOnDelete = noNagOnDelete;
@@ -799,9 +813,9 @@ function CullDialog() {
         var speeds = [0.100, .300, .500, 1.000, 1.500, 2.000];
         var interval = speeds[self.speedComboBox.currentItem];
 
-        playTimer = new Timer();
-        playTimer.interval = interval;
-        playTimer.onTimeout = function() {
+        this.playTimer = new Timer();
+        this.playTimer.interval = interval;
+        this.playTimer.onTimeout = function() {
             if (currentIndex < fileList.length - 1) {
                 currentIndex++;
             } else {
@@ -809,7 +823,7 @@ function CullDialog() {
             }
             self.selectFile(currentIndex);
         };
-        playTimer.start();
+        this.playTimer.start();
     };
 
     this.pausePlayback = function() {
@@ -819,8 +833,8 @@ function CullDialog() {
         self.prevButton.enabled = true;
         self.nextButton.enabled = true;
 
-        if (playTimer) {
-            playTimer.stop();
+        if (this.playTimer) {
+            this.playTimer.stop();
         }
     };
 
@@ -1036,7 +1050,7 @@ function CullDialog() {
     this.sizer.margin = 4;
     this.sizer.add( this.tabBox );
     this.sizer.add(this.playbackSizer);
-    this.computeBitmapGroupBox.hide();
+//    this.computeBitmapGroupBox.hide();
     this.sizer.add(this.computeBitmapGroupBox);
     this.sizer.add( this.buttons_Sizer );
 
@@ -1051,8 +1065,8 @@ function CullDialog() {
 
     // Cleanup on close
     this.onClose = function() {
-        if (playTimer) {
-            playTimer.stop();
+        if (this.playTimer) {
+            this.playTimer.stop();
         }
 	self.previewWindow.closeWindow();
     };
