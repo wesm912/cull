@@ -127,10 +127,10 @@ function ProgressDialog()
 
     
     this.startButton = new PushButton(this);
-    this.startButton.text = "Start Timer";
+    this.startButton.text = "OK";
     this.startButton.onClick = () =>
     {
-	this.timer.start();
+	this.ok();
     }
     this.buttons_Sizer = new HorizontalSizer;
     this.buttons_Sizer.addStretch();
@@ -199,8 +199,8 @@ function ProgressDialog()
 	this.setValue( this.value + 1 );
     };
 
-    this.setRange(0, 60);
-    this.LRP = null; //Function object
+    this.setRange(0);
+
 }
 
 ProgressDialog.prototype = new Dialog;

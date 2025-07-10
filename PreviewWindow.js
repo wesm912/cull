@@ -64,8 +64,8 @@ function PreviewWindow( parent )
     this.__base__ = Frame;
     this.__base__( parent );
     this.parent = parent;
-    const CULL_W = 600;
-    const CULL_H = 400;
+    const CULL_W = 750;
+    const CULL_H = 500;
     const PreviewSize = this.logicalPixelsToPhysical(202); // from Blink.cpp
     this.image = null;
     this.stretchedImage = null;
@@ -92,15 +92,14 @@ function PreviewWindow( parent )
 	}
 	let bmp = this.cache.get(path);
 	if (bmp !== null) {
-	    console.noteln("SetImage : cache hit");
 	    this.showImageFromCache(bmp);
 	} else {
-	    console.noteln("SetImage : cache miss");
 	    var window = ImageWindow.open(path)[0];
             if (window && window.isValidView && !window.isNull) {
 		this.imageWindow = window;
 		this.view = window.mainView;
 		this.image = window.mainView.image;
+//		this.cullWindow.setWindowTitle(File.findName(path));
 		this.showImage(window);
 		let scale = this.bitmapScale(this.image);
 		this.cache.set(path,
@@ -121,6 +120,7 @@ function PreviewWindow( parent )
     };
     
     this.showImageFromCache = function(bmap) {
+	let image = this.cullWindow.mainView.image;
 	this.cullWindow.mainView.beginProcess(UndoFlag_NoSwapFile);
 	this.cullWindow.mainView.image.blend(bmap);
 	this.cullWindow.mainView.endProcess();
@@ -128,12 +128,11 @@ function PreviewWindow( parent )
     };
 	
     this.showImage = function(window) {
-	console.noteln("showImage got arg " + window);
+	console.hide();
 	try {
 	    if (window != null && ! window.isNull) {
 		let view = window.mainView;
 		let image = view.image
-		console.noteln("window, view, image: " + window+ " " + view + " " + image);
 		if ( image ) {
 		    view.beginProcess(UndoFlag_NoSwapFile);
 		    image.colorSpace = ColorSpace_RGB;
@@ -143,7 +142,6 @@ function PreviewWindow( parent )
 		    try {
 			autoStretch.HardApply(view, false); //true, -2.80, 0.25);
 			let bmap = this.reticle.draw(window, image.width/25);
-			console.noteln(format("bmap dimensions %d w and %d h", bmap.width, bmap.height));
 			this.cullWindow.mainView.image.resetSelections();
 			this.cullWindow.mainView.beginProcess(UndoFlag_NoSwapFile);
 			this.cullWindow.mainView.image.selectedChannel = 0;
@@ -158,7 +156,7 @@ function PreviewWindow( parent )
 
 		    let  p = this.parent.window.position;
 		    let cp = new Point;
-		    cp.x = p.x - this.cullWindow.width -5;
+		    cp.x = p.x - this.cullWindow.width -50;
 		    cp.y = p.y;
 		    this.cullWindow.position = cp;
 		    this.cullWindow.show();
@@ -214,7 +212,6 @@ function PreviewWindow( parent )
 	// Console Progress
 	let total = filePaths.length;
 	console.abortEnabled = true;
-	console.show();
 
 	let start = new ElapsedTime();
 	for (let i = 0; i < filePaths.length; i++) {

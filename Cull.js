@@ -89,7 +89,14 @@ function FileManager() {
 
     this.moveFiles = function(files, targetDirectory, type) {
         var moved = 0;
+	if (!files || files.length == 0)
+	    return 0;
+	
+	var fileProgressDialog = new ProgressDialog();
+	fileProgressDialog.setRange(0, files.length);
+	fileProgressDialog.setText(format("Moving %d files to %s", files.length, targetDirectory));
 	console.writeln("target directory " + targetDirectory);
+	fileProgressDialog.show();
         for (var i = 0; i < files.length; i++) {
 	    console.writeln(files[i].path);
             if ((type === "keep" && files[i].keep) || (type === "reject" && files[i].reject)) {
@@ -98,6 +105,7 @@ function FileManager() {
                     File.moveFile(targetPath, files[i].path);
 //                    File.copyFile(targetPath, files[i].path);
 		    files[i].moved = true;
+		    fileProgressDialog.setValue(moved);
                     moved++;
                 } catch (error) {
                     console.writeln("Error moving file " + files[i].name + ": " + error.message);
@@ -138,6 +146,8 @@ function CullDialog() {
     this.previewWindow = new PreviewWindow(this)
     var self = this;
     this.focusStyle = 0x02;//keypress events
+
+
     // UI Controls
     this.filesTreeBox = new TreeBox(this);
     this.filesTreeBox.setMinSize(300, 300);
@@ -355,8 +365,6 @@ function CullDialog() {
 
     this.computeBitmapStartButton.onClick = function () 
     {
-	console.show();
-	console.noteln("Passing list of files of length " + fileList.length);
 	self.previewWindow.preComputeCache(fileList.map( (f) => f.path), self.progressBar.callback);
     }
 
@@ -381,12 +389,14 @@ function CullDialog() {
         var dialog = new GetDirectoryDialog();
         if (dialog.execute()) {
             fileManager.inputDirectory = dialog.directory;
-	    console.noteln("Loading directory " + dialog.directory);
             fileList = fileManager.findFiles(fileManager.inputDirectory, true);
-	    console.noteln(format( "Found %d files ", fileList.length));
             this.updateFileList();
             if (fileList.length > 0) {
-		this.computeBitmapGroupBox.show();
+		if (this.computeBitmapGroupBox.visible) {
+		    this.computeBitmapGroupBox.onShow();
+		} else {
+		    this.computeBitmapGroupBox.show();
+		}
                 currentIndex = 0;
                 this.selectFile(0);
 		//		
@@ -481,7 +491,8 @@ function CullDialog() {
     
     this.moveKeepButton.onClick = () => {
 	if (this.validateKeepDirectory() == false) return;
-        var moved = fileManager.moveFiles(fileList, fileManager.keepDirectory, "keep");
+	var files = fileList.filter( (f) => f.keep == true);
+        var moved = fileManager.moveFiles(files, fileManager.keepDirectory, "keep");
         console.writeln("Moved " + moved + " files to keep directory");
         // Remove moved files from list
         fileList = fileList.filter(function(file) { return !file.moved; });
@@ -503,7 +514,8 @@ function CullDialog() {
     this.moveRejectButton.onClick = ( ) => {
 	if (this.validateRejectDirectory() == false) return;
 	
-        var moved = fileManager.moveFiles(fileList, fileManager.rejectDirectory, "reject");
+	var files = fileList.filter( (f) => f.reject == true);
+        var moved = fileManager.moveFiles(files, fileManager.rejectDirectory, "reject");
         console.writeln("Moved " + moved + " files to reject directory");
         // Remove moved files from list
         fileList = fileList.filter(function(file) { return !file.reject; });
@@ -526,11 +538,9 @@ function CullDialog() {
     this.trashButton.onClick = () => {
 	if (fileList.length == 0)
 	    return;
-	console.show()
 	if (this.validateDelete() == true) {
 	    let nodes = this.filesTreeBox.selectedNodes;
 	    let len  = this.filesTreeBox.selectedNodes.length;
-	    console.criticalln(format("deleting %d files", len));
 	    let fileListFiles = new Array();
 	    let idx, fileObj;
 	    for (let i = 0; i < len; i++) {
@@ -640,8 +650,6 @@ function CullDialog() {
     // Keyboard handling
 
     this.onKeyPress = (key, modifiers) => {
-	console.noteln(format("Got key %d, modifiers %d", key, modifiers));
-	console.noteln(format("Incoming currentIndex is %d for keypress", currentIndex));
         switch (key) {
         case Key_Up:
             if (currentIndex > 0) {
@@ -751,18 +759,12 @@ function CullDialog() {
     };
 
     this.selectFile = function(index) {
-	console.noteln(format("Incoming selectFile, currentIndex = %d, index = %d",
-			      currentIndex, index));
         if (index >= 0 && index < fileList.length) {
 	    let currentNode = self.filesTreeBox.currentNode;
-	    console.warningln(format("selectFile: currentNode is " + currentNode));
 	    if (currentNode) {
-		console.warningln(format("selectFile thinks current index should be %d",
-				     self.filesTreeBox.childIndex(currentNode)));
 		currentNode.selected = false;
 	    }
             currentIndex = index;
-	    console.writeln("Setting current node to " + index);
             self.filesTreeBox.currentNode = self.filesTreeBox.child(index);
 //	    self.filesTreeBox.currentNode.selected = !self.filesTreeBox.currentNode.selected;
 	    self.filesTreeBox.currentNode.selected = true;
@@ -1039,7 +1041,14 @@ function CullDialog() {
     this.sizer.add( this.buttons_Sizer );
 
    this.setMinWidth( 620 );
- 
+    var p = new Point();
+    p.x = this.availableScreenRect.width -this.width - 50;
+    p.y =  100;
+    if (this.availableScreenRect.height - this.height < 100) {
+	p.y = Math.max (0, (this.availableScreenRect.height - this.height)/2);
+    }
+    this.window.position = p;
+
     // Cleanup on close
     this.onClose = function() {
         if (playTimer) {
@@ -1054,8 +1063,6 @@ CullDialog.prototype = new Dialog;
 
 // Main execution
 function main() {
-    console.show();
-
     var dialog = new CullDialog();
     try {
 	dialog.execute();
