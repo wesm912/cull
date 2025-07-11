@@ -1,0 +1,19 @@
+name: Makefile CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+    branches: ["main"]
+
+jobs:
+  build:
+
+    runs-on: all
+
+    steps:
+    - name: Install dependencies
+      run: make
+
