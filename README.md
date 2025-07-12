@@ -6,6 +6,8 @@ to a directory for further processing, and to move rejected subframes for furthe
 or immediately delete tham. This is the culling process. Quite a few catalog or collection based
 photography programs have such a feature.
 
+Run the main script, Cull.js, via PI's Execute Script File menu item.
+
 Files can be loaded by one of two means:
 1. The Load Directory button will load all image files (XISF or FITS) from a directory you choose,
 and will recursively search all subdirectories for files.
