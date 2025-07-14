@@ -12,5 +12,5 @@ jobs:
       - name: checkout repo
         uses: actions/checkout@main
       - name: build application
-        run: make build  build:
+        run: make build
 
