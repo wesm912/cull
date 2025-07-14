@@ -8,9 +8,9 @@ on:
 
 jobs:
     runs-on: ubuntu-latest
-      steps:
+    steps:
       - name: checkout repo
         uses: actions/checkout@main
       - name: build application
-        run: make build
+        run: make all
 
