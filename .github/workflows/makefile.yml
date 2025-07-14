@@ -5,15 +5,12 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-  workflow_dispatch:
-    branches: ["main"]
 
 jobs:
-  build:
-
-    runs-on: all
-
-    steps:
-    - name: Install dependencies
-      run: make
+    runs-on: ubuntu-latest
+      steps:
+      - name: checkout repo
+        uses: actions/checkout@main
+      - name: build application
+        run: make build  build:
 
